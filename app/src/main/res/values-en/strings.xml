@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Document Scanner</string>
+    <string name="app_tagline">Capture paper and extract text and numbers in order</string>
+    <string name="app_version">2.0.0</string>
+
+    <string name="shortcut_scan_short">Scan document</string>
+    <string name="shortcut_scan_long">Scan a new document with the camera</string>
+    <string name="shortcut_disabled">Shortcut unavailable</string>
+
+    <string name="title_home">Home</string>
+    <string name="title_camera">Camera</string>
+    <string name="title_result">Extracted text</string>
+    <string name="title_history">History</string>
+    <string name="title_settings">Settings</string>
+
+    <string name="home_capture">Scan document</string>
+    <string name="home_capture_desc">Capture multiple pages and the app extracts the text and numbers exactly as they are, in the same order, with automatic skew correction.</string>
+    <string name="home_pick_multiple">Pick images from device</string>
+    <string name="home_recent">Recent documents</string>
+    <string name="home_no_documents">No documents yet. Start by capturing a page or picking an image.</string>
+    <string name="home_history">History (%1$d)</string>
+    <string name="home_language">Recognition language</string>
+    <string name="home_tips_title">Tips for better accuracy</string>
+    <string name="home_tip_1">Photograph the paper on a flat surface with good lighting.</string>
+    <string name="home_tip_2">Keep the whole page inside the frame and avoid shadows.</string>
+    <string name="home_tip_3">Hold the phone steady while capturing to avoid blur.</string>
+    <string name="home_tip_4">For Arabic and English together, choose “Arabic + English”.</string>
+
+    <string name="lang_arabic">Arabic</string>
+    <string name="lang_english">English</string>
+    <string name="lang_arabic_english">Arabic + English</string>
+
+    <string name="camera_take_photo">Capture</string>
+    <string name="camera_switch">Switch camera</string>
+    <string name="camera_flash">Flash</string>
+    <string name="camera_multiple_hint">Capture several pages, then tap “Finish”. Every page is saved immediately so the app stays fast.</string>
+    <string name="camera_pages">Pages: %1$d</string>
+    <string name="camera_finish">Finish (%1$d)</string>
+    <string name="camera_undo_last">Remove last</string>
+    <string name="camera_permission_title">Camera permission required</string>
+    <string name="camera_permission_message">The app needs the camera to scan documents. You can also pick images from the device without camera permission.</string>
+    <string name="camera_grant">Grant permission</string>
+    <string name="error_capture">Could not capture the photo. Please try again.</string>
+
+    <string name="processing_title">Extracting text…</string>
+    <string name="processing_page">Processing page %1$d of %2$d</string>
+
+    <string name="result_lines">Text lines in order (%1$d)</string>
+    <string name="result_numbers">Numbers in order (%1$d)</string>
+    <string name="result_numbers_empty">No numbers were found on this page.</string>
+    <string name="result_full_text">Full text</string>
+    <string name="result_language">Language: %1$s</string>
+    <string name="result_overlay">Show text positions on the image</string>
+    <string name="result_numbers_normalized">Number in Latin digits: %1$s</string>
+    <string name="result_copy_latin">Copy as Latin</string>
+    <string name="result_tab_lines">Text</string>
+    <string name="result_tab_numbers">Numbers</string>
+    <string name="result_tab_text">Full text</string>
+    <string name="result_doc_stats">%1$d pages · %2$d lines · %3$d numbers</string>
+    <string name="result_title_hint">Document title</string>
+    <string name="result_page_empty">This page has no text yet.</string>
+    <string name="result_confidence">Confidence: %1$d%%</string>
+
+    <string name="action_copy">Copy</string>
+    <string name="action_copy_all">Copy all text</string>
+    <string name="action_copy_numbers">Copy all numbers</string>
+    <string name="action_copy_line">Copy this line</string>
+    <string name="action_copy_page">Copy page text</string>
+    <string name="action_export_pdf">Export PDF</string>
+    <string name="action_export_txt">Export TXT</string>
+    <string name="action_share">Share text</string>
+    <string name="action_share_image">Share image</string>
+    <string name="action_share_page_image">Page image</string>
+    <string name="action_save">Save</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_close">Close</string>
+    <string name="action_back">Back</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_delete_document">Delete document</string>
+    <string name="action_delete_page">Delete page</string>
+    <string name="action_delete_selected">Delete selected (%1$d)</string>
+    <string name="action_rename">Rename</string>
+    <string name="action_add_pages">Add pages</string>
+    <string name="action_add_images">Add images</string>
+    <string name="action_rotate">Rotate page</string>
+    <string name="action_reprocess">Re-run OCR with higher accuracy</string>
+    <string name="action_undo">Undo</string>
+    <string name="action_select">Select</string>
+    <string name="action_select_all">Select all</string>
+    <string name="action_clear_selection">Clear selection</string>
+    <string name="action_cancel_processing">Stop processing</string>
+    <string name="action_load_more">Load more</string>
+
+    <string name="copied">Copied to clipboard</string>
+    <string name="clipboard_label">Extracted text</string>
+    <string name="export_saved_pdf">PDF file exported</string>
+    <string name="export_saved_txt">TXT file exported</string>
+    <string name="export_failed">Export failed</string>
+    <string name="export_page_header">— Page %1$d —</string>
+
+    <string name="document_deleted">Document deleted</string>
+    <string name="documents_deleted">%1$d documents deleted</string>
+    <string name="document_restored">Document restored</string>
+    <string name="page_deleted">Page deleted</string>
+    <string name="renamed">Title updated</string>
+    <string name="untitled_document">Untitled document</string>
+    <string name="scan_done">Text extracted</string>
+    <string name="page_ocr_failed">Could not recognize one of the pages</string>
+    <string name="document_meta_pages_numbers">%1$d pages · %2$d numbers</string>
+
+    <string name="history_empty">No saved documents yet.\nStart by scanning a new document.</string>
+    <string name="history_empty_preview">No text</string>
+    <string name="history_count">%1$d documents</string>
+    <string name="history_selected">Selected: %1$d</string>
+    <string name="history_search_hint">Search history</string>
+    <string name="history_sort">Sort</string>
+    <string name="history_no_results">No matching results.</string>
+
+    <string name="confirm_delete_title">Delete document?</string>
+    <string name="confirm_delete_message">“%1$s” will be removed from history. You can undo right after deleting.</string>
+    <string name="confirm_delete_page_title">Delete page?</string>
+    <string name="confirm_delete_page_message">This page, its image and its text will be deleted.</string>
+    <string name="confirm_delete_selected_title">Delete selected documents?</string>
+    <string name="confirm_delete_selected_message">%1$d documents will be removed from history. You can undo right after deleting.</string>
+
+    <string name="sort_newest">Newest first</string>
+    <string name="sort_oldest">Oldest first</string>
+    <string name="sort_name">By name</string>
+
+    <string name="settings_section_accuracy">Accuracy</string>
+    <string name="settings_preprocess">Image preprocessing</string>
+    <string name="preprocess_auto">Auto (recommended)</string>
+    <string name="preprocess_grayscale">Grayscale</string>
+    <string name="preprocess_binarized">Black &amp; white (higher accuracy)</string>
+    <string name="preprocess_color">Color</string>
+    <string name="settings_min_confidence">Minimum line confidence: %1$d%%</string>
+    <string name="settings_min_confidence_hint">Lines below this confidence are hidden. Use 0 to show every line.</string>
+    <string name="settings_straighten">Auto-straighten pages</string>
+    <string name="settings_straighten_hint">Rotate the image before OCR so lines become horizontal.</string>
+    <string name="settings_language">Default recognition language</string>
+    <string name="settings_section_display">Display</string>
+    <string name="settings_theme">Theme</string>
+    <string name="theme_system">System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="settings_boxes">Show text positions by default</string>
+    <string name="settings_colorful_cards">Colorful text cards</string>
+    <string name="settings_colorful_cards_hint">Give every line its own accent color and confidence badge.</string>
+    <string name="settings_about_title">About</string>
+    <string name="settings_about_text">All recognition runs entirely on the device without internet.\nVersion %1$s</string>
+
+    <string name="error_load_image">Could not load the image.</string>
+    <string name="error_engine_init">Could not initialize the OCR engine. Make sure the device has enough free space.</string>
+    <string name="error_document_load">Could not open the document.</string>
+</resources>

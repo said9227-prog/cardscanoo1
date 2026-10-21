@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ماسح المستندات</string>
+    <string name="app_tagline">تصوير الورق واستخراج النصوص والأرقام بالترتيب</string>
+    <string name="app_version">2.0.0</string>
+
+    <string name="shortcut_scan_short">تصوير مستند</string>
+    <string name="shortcut_scan_long">تصوير مستند جديد بالكاميرا</string>
+    <string name="shortcut_disabled">الاختصار غير متاح</string>
+
+    <string name="title_home">الرئيسية</string>
+    <string name="title_camera">التصوير</string>
+    <string name="title_result">النص المستخرج</string>
+    <string name="title_history">السجل</string>
+    <string name="title_settings">الإعدادات</string>
+
+    <string name="home_capture">تصوير مستند</string>
+    <string name="home_capture_desc">التقط عدة صفحات، وسيستخرج التطبيق النصوص والأرقام كما هي وبنفس ترتيبها، مع تصحيح ميل الصفحة تلقائياً.</string>
+    <string name="home_pick_multiple">اختيار صور من الجهاز</string>
+    <string name="home_recent">أحدث المستندات</string>
+    <string name="home_no_documents">لا توجد مستندات بعد. ابدأ بتصوير صفحة أو اختيار صورة.</string>
+    <string name="home_history">السجل (%1$d)</string>
+    <string name="home_language">لغة التعرف</string>
+    <string name="home_tips_title">نصائح لدقة أفضل</string>
+    <string name="home_tip_1">صوّر الورقة على سطح مستوٍ وبإضاءة جيدة.</string>
+    <string name="home_tip_2">اجعل الورقة كاملة داخل الإطار وتجنّب الظلال.</string>
+    <string name="home_tip_3">ثبّت الهاتف أثناء التصوير لتجنّب الضبابية.</string>
+    <string name="home_tip_4">للنصوص العربية والإنجليزية معاً اختر «العربية + الإنجليزية».</string>
+
+    <string name="lang_arabic">العربية</string>
+    <string name="lang_english">الإنجليزية</string>
+    <string name="lang_arabic_english">العربية + الإنجليزية</string>
+
+    <string name="camera_take_photo">التقاط</string>
+    <string name="camera_switch">تبديل الكاميرا</string>
+    <string name="camera_flash">الفلاش</string>
+    <string name="camera_multiple_hint">التقط عدة صفحات ثم اضغط «إنهاء». كل صفحة تُحفظ فوراً حتى لا يتأخر التطبيق.</string>
+    <string name="camera_pages">الصفحات: %1$d</string>
+    <string name="camera_finish">إنهاء (%1$d)</string>
+    <string name="camera_undo_last">حذف الأخيرة</string>
+    <string name="camera_permission_title">إذن الكاميرا مطلوب</string>
+    <string name="camera_permission_message">يحتاج التطبيق إلى الكاميرا لتصوير المستندات. يمكنك أيضاً اختيار صور من الجهاز بدون إذن الكاميرا.</string>
+    <string name="camera_grant">منح الإذن</string>
+    <string name="error_capture">تعذر التقاط الصورة، حاول مرة أخرى.</string>
+
+    <string name="processing_title">جارٍ استخراج النص…</string>
+    <string name="processing_page">جارٍ معالجة الصفحة %1$d من %2$d</string>
+
+    <string name="result_lines">النصوص بترتيبها (%1$d)</string>
+    <string name="result_numbers">الأرقام بالترتيب (%1$d)</string>
+    <string name="result_numbers_empty">لم يتم العثور على أرقام في هذه الصفحة.</string>
+    <string name="result_full_text">النص الكامل</string>
+    <string name="result_language">اللغة: %1$s</string>
+    <string name="result_overlay">إظهار مواضع النص على الصورة</string>
+    <string name="result_numbers_normalized">الرقم بالأرقام اللاتينية: %1$s</string>
+    <string name="result_copy_latin">نسخ باللاتينية</string>
+    <string name="result_tab_lines">النصوص</string>
+    <string name="result_tab_numbers">الأرقام</string>
+    <string name="result_tab_text">النص الكامل</string>
+    <string name="result_doc_stats">%1$d صفحة · %2$d سطر · %3$d رقم</string>
+    <string name="result_title_hint">عنوان المستند</string>
+    <string name="result_page_empty">لا يوجد نص في هذه الصفحة بعد.</string>
+    <string name="result_confidence">الثقة: %1$d%%</string>
+
+    <string name="action_copy">نسخ</string>
+    <string name="action_copy_all">نسخ كل النص</string>
+    <string name="action_copy_numbers">نسخ كل الأرقام</string>
+    <string name="action_copy_line">نسخ هذا السطر</string>
+    <string name="action_copy_page">نسخ نص الصفحة</string>
+    <string name="action_export_pdf">تصدير PDF</string>
+    <string name="action_export_txt">تصدير TXT</string>
+    <string name="action_share">مشاركة النص</string>
+    <string name="action_share_image">مشاركة الصورة</string>
+    <string name="action_share_page_image">صورة الصفحة</string>
+    <string name="action_save">حفظ</string>
+    <string name="action_cancel">إلغاء</string>
+    <string name="action_close">إغلاق</string>
+    <string name="action_back">رجوع</string>
+    <string name="action_delete">حذف</string>
+    <string name="action_delete_document">حذف المستند</string>
+    <string name="action_delete_page">حذف الصفحة</string>
+    <string name="action_delete_selected">حذف المحدد (%1$d)</string>
+    <string name="action_rename">إعادة تسمية</string>
+    <string name="action_add_pages">إضافة صفحات</string>
+    <string name="action_add_images">إضافة صور</string>
+    <string name="action_rotate">تدوير الصفحة</string>
+    <string name="action_reprocess">إعادة التعرف بدقة أعلى</string>
+    <string name="action_undo">تراجع</string>
+    <string name="action_select">تحديد</string>
+    <string name="action_select_all">تحديد الكل</string>
+    <string name="action_clear_selection">إلغاء التحديد</string>
+    <string name="action_cancel_processing">إيقاف المعالجة</string>
+    <string name="action_load_more">عرض المزيد</string>
+
+    <string name="copied">تم النسخ إلى الحافظة</string>
+    <string name="clipboard_label">نص مستخرج</string>
+    <string name="export_saved_pdf">تم تصدير ملف PDF</string>
+    <string name="export_saved_txt">تم تصدير ملف TXT</string>
+    <string name="export_failed">تعذر التصدير</string>
+    <string name="export_page_header">— صفحة %1$d —</string>
+
+    <string name="document_deleted">تم حذف المستند</string>
+    <string name="documents_deleted">تم حذف %1$d مستندات</string>
+    <string name="document_restored">تمت استعادة المستند</string>
+    <string name="page_deleted">تم حذف الصفحة</string>
+    <string name="renamed">تم تغيير العنوان</string>
+    <string name="untitled_document">مستند بدون عنوان</string>
+    <string name="scan_done">تم استخراج النص</string>
+    <string name="page_ocr_failed">تعذر التعرف على إحدى الصفحات</string>
+    <string name="document_meta_pages_numbers">%1$d صفحة · %2$d رقم</string>
+
+    <string name="history_empty">لا توجد عمليات محفوظة بعد.\nابدأ بتصوير مستند جديد.</string>
+    <string name="history_empty_preview">لا يوجد نص</string>
+    <string name="history_count">%1$d مستند</string>
+    <string name="history_selected">المحدد: %1$d</string>
+    <string name="history_search_hint">بحث في السجل</string>
+    <string name="history_sort">ترتيب</string>
+    <string name="history_no_results">لا توجد نتائج مطابقة.</string>
+
+    <string name="confirm_delete_title">حذف المستند؟</string>
+    <string name="confirm_delete_message">سيتم حذف «%1$s» من السجل. يمكنك التراجع فوراً بعد الحذف.</string>
+    <string name="confirm_delete_page_title">حذف الصفحة؟</string>
+    <string name="confirm_delete_page_message">سيتم حذف هذه الصفحة وصورتها ونصها.</string>
+    <string name="confirm_delete_selected_title">حذف المستندات المحددة؟</string>
+    <string name="confirm_delete_selected_message">سيتم حذف %1$d مستندات من السجل. يمكنك التراجع فوراً بعد الحذف.</string>
+
+    <string name="sort_newest">الأحدث أولاً</string>
+    <string name="sort_oldest">الأقدم أولاً</string>
+    <string name="sort_name">حسب الاسم</string>
+
+    <string name="settings_section_accuracy">الدقة</string>
+    <string name="settings_preprocess">معالجة الصورة</string>
+    <string name="preprocess_auto">تلقائي (موصى به)</string>
+    <string name="preprocess_grayscale">تدرج رمادي</string>
+    <string name="preprocess_binarized">أسود وأبيض (دقة أعلى)</string>
+    <string name="preprocess_color">ملون</string>
+    <string name="settings_min_confidence">أدنى ثقة للأسطر: %1$d%%</string>
+    <string name="settings_min_confidence_hint">تُستبعد الأسطر التي تقل ثقتها عن هذا الحد. القيمة 0 تعرض كل الأسطر.</string>
+    <string name="settings_straighten">تصحيح ميل الصفحة تلقائياً</string>
+    <string name="settings_straighten_hint">تدوير الصورة قبل التعرف لتصبح الأسطر أفقية.</string>
+    <string name="settings_language">لغة التعرف الافتراضية</string>
+    <string name="settings_section_display">العرض</string>
+    <string name="settings_theme">المظهر</string>
+    <string name="theme_system">حسب النظام</string>
+    <string name="theme_light">فاتح</string>
+    <string name="theme_dark">داكن</string>
+    <string name="settings_boxes">إظهار مواضع النص افتراضياً</string>
+    <string name="settings_colorful_cards">بطاقات نصوص مميزة بالألوان</string>
+    <string name="settings_colorful_cards_hint">تمييز كل سطر بشريط ولون ودرجة ثقة خاصة.</string>
+    <string name="settings_about_title">عن التطبيق</string>
+    <string name="settings_about_text">يعمل التعرف على النصوص بالكامل داخل الجهاز دون إنترنت.\nالإصدار %1$s</string>
+
+    <string name="error_load_image">تعذر تحميل الصورة.</string>
+    <string name="error_engine_init">تعذر تهيئة محرك التعرف على النصوص. تأكد من توفر مساحة كافية في الجهاز.</string>
+    <string name="error_document_load">تعذر فتح المستند.</string>
+</resources>
