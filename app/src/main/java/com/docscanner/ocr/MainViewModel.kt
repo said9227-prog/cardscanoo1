@@ -407,10 +407,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         if (ocrJob?.isActive == true) return
         ocrJob = viewModelScope.launch {
             val loaded = withContext(Dispatchers.IO) { repository.loadDocument(documentId) }
-            if (loaded == null) {
-                sendMessage(R.string.error_document_load)
-                return@launch
-            }
+                ?: run {
+                    sendMessage(R.string.error_document_load)
+                    return@launch
+                }
             var document = loaded
             var failures = 0
             _state.update {
