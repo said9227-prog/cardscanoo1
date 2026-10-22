@@ -10,13 +10,16 @@ import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
+import androidx.camera.core.FocusMeteringAction
 import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,6 +36,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Cameraswitch
 import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.CreditCard
 import androidx.compose.material.icons.outlined.FlashOn
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -50,8 +54,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -62,9 +71,12 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import com.docscanner.ocr.R
 import com.docscanner.ocr.ui.components.rememberThumbnail
+import com.docscanner.ocr.util.ImageUtils
 import kotlinx.coroutines.suspendCancellableCoroutine
+import java.util.concurrent.TimeUnit
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+import kotlin.math.min
 
 @Composable
 fun CameraScreen(
@@ -164,6 +176,7 @@ private fun CameraPreview(onCaptured: (ByteArray, Int) -> Unit) {
     var camera by remember { mutableStateOf<Camera?>(null) }
     var imageCapture by remember { mutableStateOf<ImageCapture?>(null) }
     var torchEnabled by remember { mutableStateOf(false) }
+    var cardMode by remember { mutableStateOf(false) }
     var isCapturing by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
@@ -174,7 +187,8 @@ private fun CameraPreview(onCaptured: (ByteArray, Int) -> Unit) {
             it.setSurfaceProvider(previewView.surfaceProvider)
         }
         val capture = ImageCapture.Builder()
-            .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
+            // Quality over latency: small digits need the full-resolution frame.
+            .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
             .setTargetRotation(previewView.display?.rotation ?: Surface.ROTATION_0)
             .build()
         try {
@@ -188,6 +202,15 @@ private fun CameraPreview(onCaptured: (ByteArray, Int) -> Unit) {
 
     LaunchedEffect(torchEnabled, camera) {
         runCatching { camera?.cameraControl?.enableTorch(torchEnabled) }
+    }
+
+    // Small-card mode: zoom a little so the card fills the frame without digital
+    // upscaling later. Reset to 1x for normal document capture.
+    LaunchedEffect(cardMode, camera) {
+        val control = camera?.cameraControl ?: return@LaunchedEffect
+        val maxZoom = camera?.cameraInfo?.zoomState?.value?.maxZoomRatio ?: 1f
+        val target = if (cardMode) min(2.5f, maxZoom) else 1f
+        runCatching { control.setZoomRatio(target) }
     }
 
     fun capturePhoto() {
@@ -204,7 +227,22 @@ private fun CameraPreview(onCaptured: (ByteArray, Int) -> Unit) {
                             ByteArray(buffer.remaining()).also { target -> buffer.get(target) }
                         }
                         if (bytes != null) {
-                            onCaptured(bytes, image.imageInfo.rotationDegrees)
+                            val rotation = image.imageInfo.rotationDegrees
+                            if (cardMode) {
+                                val cropped = ImageUtils.cropCenterJpeg(
+                                    bytes,
+                                    rotation,
+                                    CARD_CROP_WIDTH,
+                                    CARD_CROP_HEIGHT
+                                )
+                                if (cropped != null) {
+                                    onCaptured(cropped, 0)
+                                } else {
+                                    onCaptured(bytes, rotation)
+                                }
+                            } else {
+                                onCaptured(bytes, rotation)
+                            }
                         } else {
                             errorMessage = context.getString(R.string.error_capture)
                         }
@@ -225,7 +263,40 @@ private fun CameraPreview(onCaptured: (ByteArray, Int) -> Unit) {
     Box(modifier = Modifier.fillMaxSize()) {
         AndroidView(
             factory = { previewView },
+            modifier = Modifier
+                .fillMaxSize()
+                .pointerInput(camera) {
+                    detectTapGestures { offset ->
+                        val control = camera?.cameraControl ?: return@detectTapGestures
+                        val point = previewView.meteringPointFactory
+                            .createPoint(offset.x, offset.y)
+                        val action = FocusMeteringAction.Builder(
+                            point,
+                            FocusMeteringAction.FLAG_AF or FocusMeteringAction.FLAG_AE
+                        ).setAutoCancelDuration(3, TimeUnit.SECONDS).build()
+                        runCatching { control.startFocusAndMetering(action) }
+                    }
+                }
+        )
+
+        CameraGuide(
+            cardMode = cardMode,
             modifier = Modifier.fillMaxSize()
+        )
+
+        Text(
+            text = stringResource(
+                if (cardMode) R.string.camera_card_hint else R.string.camera_document_hint
+            ),
+            color = Color.White,
+            style = MaterialTheme.typography.bodySmall,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 56.dp, start = 24.dp, end = 24.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(Color.Black.copy(alpha = 0.45f))
+                .padding(horizontal = 12.dp, vertical = 6.dp)
         )
 
         Row(
@@ -268,6 +339,24 @@ private fun CameraPreview(onCaptured: (ByteArray, Int) -> Unit) {
                     }
                 )
             }
+            Spacer(modifier = Modifier.width(24.dp))
+            IconButton(onClick = { cardMode = !cardMode }) {
+                Icon(
+                    imageVector = Icons.Outlined.CreditCard,
+                    contentDescription = stringResource(
+                        if (cardMode) {
+                            R.string.camera_document_mode
+                        } else {
+                            R.string.camera_card_mode
+                        }
+                    ),
+                    tint = if (cardMode) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        Color.White
+                    }
+                )
+            }
         }
 
         if (isCapturing) {
@@ -288,6 +377,52 @@ private fun CameraPreview(onCaptured: (ByteArray, Int) -> Unit) {
                     .padding(16.dp)
             )
         }
+    }
+}
+
+@Composable
+private fun CameraGuide(cardMode: Boolean, modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier) {
+        val frameWidth = size.width * if (cardMode) CARD_FRAME_WIDTH else DOC_FRAME_WIDTH
+        val frameHeight = size.height * if (cardMode) CARD_FRAME_HEIGHT else DOC_FRAME_HEIGHT
+        val left = (size.width - frameWidth) / 2f
+        val top = (size.height - frameHeight) / 2f
+        val right = left + frameWidth
+        val bottom = top + frameHeight
+        val shade = Color.Black.copy(alpha = 0.28f)
+
+        drawRect(shade, topLeft = Offset.Zero, size = Size(size.width, top))
+        drawRect(
+            shade,
+            topLeft = Offset(0f, bottom),
+            size = Size(size.width, size.height - bottom)
+        )
+        drawRect(shade, topLeft = Offset(0f, top), size = Size(left, frameHeight))
+        drawRect(
+            shade,
+            topLeft = Offset(right, top),
+            size = Size(size.width - right, frameHeight)
+        )
+
+        drawRoundRect(
+            color = Color.White.copy(alpha = 0.75f),
+            topLeft = Offset(left, top),
+            size = Size(frameWidth, frameHeight),
+            cornerRadius = CornerRadius(18f, 18f),
+            style = Stroke(width = 2f)
+        )
+
+        val corner = min(frameWidth, frameHeight) * 0.09f
+        val stroke = 5f
+        val accent = Color(0xFF80CBC4)
+        drawLine(accent, Offset(left, top + corner), Offset(left, top), stroke)
+        drawLine(accent, Offset(left, top), Offset(left + corner, top), stroke)
+        drawLine(accent, Offset(right - corner, top), Offset(right, top), stroke)
+        drawLine(accent, Offset(right, top), Offset(right, top + corner), stroke)
+        drawLine(accent, Offset(left, bottom - corner), Offset(left, bottom), stroke)
+        drawLine(accent, Offset(left, bottom), Offset(left + corner, bottom), stroke)
+        drawLine(accent, Offset(right - corner, bottom), Offset(right, bottom), stroke)
+        drawLine(accent, Offset(right, bottom), Offset(right, bottom - corner), stroke)
     }
 }
 
@@ -370,6 +505,13 @@ private fun ShutterButton(enabled: Boolean, onClick: () -> Unit) {
         )
     }
 }
+
+private const val CARD_FRAME_WIDTH = 0.86f
+private const val CARD_FRAME_HEIGHT = 0.45f
+private const val DOC_FRAME_WIDTH = 0.90f
+private const val DOC_FRAME_HEIGHT = 0.78f
+private const val CARD_CROP_WIDTH = CARD_FRAME_WIDTH
+private const val CARD_CROP_HEIGHT = CARD_FRAME_HEIGHT
 
 private suspend fun Context.awaitCameraProvider(): ProcessCameraProvider =
     suspendCancellableCoroutine { continuation ->

@@ -41,6 +41,10 @@
     <string name="camera_permission_title">Camera permission required</string>
     <string name="camera_permission_message">The app needs the camera to scan documents. You can also pick images from the device without camera permission.</string>
     <string name="camera_grant">Grant permission</string>
+    <string name="camera_card_mode">Small card mode</string>
+    <string name="camera_document_mode">Document mode</string>
+    <string name="camera_card_hint">Place the card or small paper inside the frame; it will be cropped automatically.</string>
+    <string name="camera_document_hint">Keep the whole page inside the frame, and tap the screen to focus.</string>
     <string name="error_capture">Could not capture the photo. Please try again.</string>
 
     <string name="processing_title">Extracting text…</string>
@@ -61,6 +65,7 @@
     <string name="result_title_hint">Document title</string>
     <string name="result_page_empty">This page has no text yet.</string>
     <string name="result_confidence">Confidence: %1$d%%</string>
+    <string name="result_edit_hint">Edit the text directly before copying, sharing or exporting.</string>
 
     <string name="action_copy">Copy</string>
     <string name="action_copy_all">Copy all text</string>
@@ -89,6 +94,7 @@
     <string name="action_undo">Undo</string>
     <string name="action_select">Select</string>
     <string name="action_select_all">Select all</string>
+    <string name="action_clear">Clear text</string>
     <string name="action_clear_selection">Clear selection</string>
     <string name="action_cancel_processing">Stop processing</string>
     <string name="action_load_more">Load more</string>
@@ -149,7 +155,7 @@
     <string name="settings_colorful_cards">Colorful text cards</string>
     <string name="settings_colorful_cards_hint">Give every line its own accent color and confidence badge.</string>
     <string name="settings_about_title">About</string>
-    <string name="settings_about_text">All recognition runs entirely on the device without internet.\nVersion %1$s</string>
+    <string name="settings_about_text">All recognition runs on the device without internet (ML Kit for English and numbers, Tesseract for Arabic).\nVersion %1$s</string>
 
     <string name="error_load_image">Could not load the image.</string>
     <string name="error_engine_init">Could not initialize the OCR engine. Make sure the device has enough free space.</string>

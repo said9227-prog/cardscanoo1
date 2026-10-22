@@ -11,11 +11,14 @@ object NumberExtractor {
 
     /**
      * Matches Latin digits, Arabic-Indic digits (٠-٩) and Eastern Arabic-Indic digits (۰-۹),
-     * including decimal/thousand separators, dates, times and a trailing percent sign.
+     * including decimal/thousand separators, dates, times, a trailing percent sign,
+     * and digit groups separated by spaces (e.g. card / WiFi numbers printed as
+     * "546 464 664").
      */
     val NUMBER_REGEX = Regex(
         "[0-9\\u0660-\\u0669\\u06F0-\\u06F9]+" +
-            "(?:[.,\\u066B\\u066C:/\\-][0-9\\u0660-\\u0669\\u06F0-\\u06F9]+)*%?"
+            "(?:[.,\\u066B\\u066C:/\\-][0-9\\u0660-\\u0669\\u06F0-\\u06F9]+)*" +
+            "(?:[ \\u00A0]+[0-9\\u0660-\\u0669\\u06F0-\\u06F9]+)*%?"
     )
 
     fun findAll(text: String): List<MatchResult> = NUMBER_REGEX.findAll(text).toList()

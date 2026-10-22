@@ -5,7 +5,6 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.StringRes
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -27,15 +26,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AddPhotoAlternate
+import androidx.compose.material.icons.outlined.Clear
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Description
@@ -45,6 +42,7 @@ import androidx.compose.material.icons.outlined.PhotoCamera
 import androidx.compose.material.icons.outlined.PictureAsPdf
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.RotateRight
+import androidx.compose.material.icons.outlined.SelectAll
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -67,6 +65,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -78,26 +78,16 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.docscanner.ocr.R
 import com.docscanner.ocr.model.ExportFormat
 import com.docscanner.ocr.model.OcrLine
-import com.docscanner.ocr.model.OcrNumber
 import com.docscanner.ocr.model.ScanDocument
 import com.docscanner.ocr.model.ScanPage
-import com.docscanner.ocr.ocr.NumberExtractor
-import com.docscanner.ocr.ui.components.ChoiceChip
 import com.docscanner.ocr.ui.components.CompactButton
-import com.docscanner.ocr.ui.components.CopyIconButton
-import com.docscanner.ocr.ui.components.EmptyState
-import com.docscanner.ocr.ui.components.ProgressBar
 import com.docscanner.ocr.ui.components.SectionHeader
 import com.docscanner.ocr.ui.components.copyToClipboard
 import com.docscanner.ocr.ui.components.rememberThumbnail
@@ -105,26 +95,13 @@ import com.docscanner.ocr.ui.components.shareImage
 import com.docscanner.ocr.ui.components.shareText
 import com.docscanner.ocr.ui.theme.BoxFill
 import com.docscanner.ocr.ui.theme.BoxStroke
-import com.docscanner.ocr.ui.theme.ConfidenceHigh
-import com.docscanner.ocr.ui.theme.ConfidenceLow
-import com.docscanner.ocr.ui.theme.ConfidenceMedium
-import com.docscanner.ocr.ui.theme.SelectedBoxFill
-import com.docscanner.ocr.ui.theme.SelectedBoxStroke
-import com.docscanner.ocr.ui.theme.cardAccent
-import com.docscanner.ocr.ui.theme.numberAccent
 import com.docscanner.ocr.util.ImageUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import kotlin.math.roundToInt
-
-private enum class ResultSection(@StringRes val labelRes: Int) {
-    LINES(R.string.result_tab_lines),
-    NUMBERS(R.string.result_tab_numbers),
-    TEXT(R.string.result_tab_text)
-}
+import kotlin.math.min
 
 @Composable
 fun ResultScreen(
@@ -151,8 +128,6 @@ fun ResultScreen(
 ) {
     val page = document.pages.getOrNull(pageIndex)
 
-    var section by remember { mutableStateOf(ResultSection.LINES) }
-    var selectedLine by remember(page?.id) { mutableStateOf<Int?>(null) }
     var showRename by remember { mutableStateOf(false) }
     var renameText by remember(document.title) { mutableStateOf(document.title) }
     var confirmDeleteDocument by remember { mutableStateOf(false) }
@@ -194,70 +169,10 @@ fun ResultScreen(
                 )
             }
 
-            if (wide) {
-                Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                    PreviewPane(
-                        page = page,
-                        showBoxes = showBoxes,
-                        selectedLine = selectedLine,
-                        version = document.updatedAt,
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight()
-                            .padding(8.dp)
-                    )
-                    TextPane(
-                        document = document,
-                        page = page,
-                        section = section,
-                        onSectionChange = { section = it },
-                        selectedLine = selectedLine,
-                        onSelectLine = { index ->
-                            selectedLine = if (selectedLine == index) null else index
-                        },
-                        colorfulCards = colorfulCards,
-                        isProcessing = isProcessing,
-                        onRenameClick = {
-                            renameText = document.title
-                            showRename = true
-                        },
-                        onAddPages = onAddPages,
-                        onPickImages = {
-                            pickImages.launch(
-                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                            )
-                        },
-                        onExportPdf = { exportPdf.launch("scan_$stamp.pdf") },
-                        onExportTxt = { exportTxt.launch("scan_$stamp.txt") },
-                        onRotatePage = { page?.let { onRotatePage(it.id) } },
-                        onReprocessPage = { page?.let { onReprocessPage(it.id) } },
-                        onDeletePage = { confirmDeletePage = true },
-                        onDeleteDocument = { confirmDeleteDocument = true },
-                        onOpenHistory = onOpenHistory,
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight()
-                    )
-                }
-            } else {
-                PreviewPane(
-                    page = page,
-                    showBoxes = showBoxes,
-                    selectedLine = selectedLine,
-                    version = document.updatedAt,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(0.42f)
-                )
+            val textPane: @Composable (Modifier) -> Unit = { paneModifier ->
                 TextPane(
                     document = document,
                     page = page,
-                    section = section,
-                    onSectionChange = { section = it },
-                    selectedLine = selectedLine,
-                    onSelectLine = { index ->
-                        selectedLine = if (selectedLine == index) null else index
-                    },
                     colorfulCards = colorfulCards,
                     isProcessing = isProcessing,
                     onRenameClick = {
@@ -277,7 +192,38 @@ fun ResultScreen(
                     onDeletePage = { confirmDeletePage = true },
                     onDeleteDocument = { confirmDeleteDocument = true },
                     onOpenHistory = onOpenHistory,
+                    modifier = paneModifier
+                )
+            }
+
+            if (wide) {
+                Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                    PreviewPane(
+                        page = page,
+                        showBoxes = showBoxes,
+                        version = document.updatedAt,
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .padding(8.dp)
+                    )
+                    textPane(
+                        Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                    )
+                }
+            } else {
+                PreviewPane(
+                    page = page,
+                    showBoxes = showBoxes,
+                    version = document.updatedAt,
                     modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(0.42f)
+                )
+                textPane(
+                    Modifier
                         .fillMaxWidth()
                         .weight(0.58f)
                 )
@@ -400,7 +346,10 @@ private fun DocumentHeader(
                         document.pages.size,
                         document.linesCount,
                         document.numbers.size
-                    ) + " · " + stringResource(R.string.result_language, stringResource(document.language.labelRes)),
+                    ) + " · " + stringResource(
+                        R.string.result_language,
+                        stringResource(document.language.labelRes)
+                    ),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1
@@ -535,7 +484,7 @@ private fun ProcessingCard(
                     Text(text = stringResource(R.string.action_cancel_processing))
                 }
             }
-            ProgressBar(
+            com.docscanner.ocr.ui.components.ProgressBar(
                 progress = if (total > 0) processed.toFloat() / total.toFloat() else 0f
             )
         }
@@ -546,7 +495,6 @@ private fun ProcessingCard(
 private fun PreviewPane(
     page: ScanPage?,
     showBoxes: Boolean,
-    selectedLine: Int?,
     version: Long,
     modifier: Modifier = Modifier
 ) {
@@ -577,8 +525,7 @@ private fun PreviewPane(
                         pageId = page.id,
                         version = version,
                         lines = page.lines,
-                        showBoxes = showBoxes,
-                        selectedLine = selectedLine
+                        showBoxes = showBoxes
                     )
                 } else {
                     CircularProgressIndicator(color = Color.White)
@@ -594,8 +541,7 @@ private fun DocumentPreview(
     pageId: String,
     version: Long,
     lines: List<OcrLine>,
-    showBoxes: Boolean,
-    selectedLine: Int?
+    showBoxes: Boolean
 ) {
     val density = LocalDensity.current
     var scale by remember(pageId, version) { mutableStateOf(1f) }
@@ -611,7 +557,7 @@ private fun DocumentPreview(
         val containerHeight = with(density) { maxHeight.toPx() }
 
         if (containerWidth > 0f && containerHeight > 0f && bitmap.width > 0 && bitmap.height > 0) {
-            val fit = minOf(containerWidth / bitmap.width, containerHeight / bitmap.height)
+            val fit = min(containerWidth / bitmap.width, containerHeight / bitmap.height)
             val drawWidth = bitmap.width * fit
             val drawHeight = bitmap.height * fit
 
@@ -655,17 +601,16 @@ private fun DocumentPreview(
                                 width = (box.width * scaleX).coerceAtLeast(2f),
                                 height = (box.height * scaleY).coerceAtLeast(2f)
                             )
-                            val isSelected = line.index == selectedLine
                             drawRect(
-                                color = if (isSelected) SelectedBoxFill else BoxFill,
+                                color = BoxFill,
                                 topLeft = topLeft,
                                 size = rectSize
                             )
                             drawRect(
-                                color = if (isSelected) SelectedBoxStroke else BoxStroke,
+                                color = BoxStroke,
                                 topLeft = topLeft,
                                 size = rectSize,
-                                style = Stroke(width = if (isSelected) 3f else 1.5f)
+                                style = Stroke(width = 1.5f)
                             )
                         }
                     }
@@ -679,10 +624,6 @@ private fun DocumentPreview(
 private fun TextPane(
     document: ScanDocument,
     page: ScanPage?,
-    section: ResultSection,
-    onSectionChange: (ResultSection) -> Unit,
-    selectedLine: Int?,
-    onSelectLine: (Int?) -> Unit,
     colorfulCards: Boolean,
     isProcessing: Boolean,
     onRenameClick: () -> Unit,
@@ -698,150 +639,89 @@ private fun TextPane(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val accent = numberAccent
+    val focusRequester = remember { FocusRequester() }
+    var textState by remember(document.id, document.updatedAt) {
+        mutableStateOf(TextFieldValue(document.fullText))
+    }
 
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        item {
-            ActionsPanel(
-                hasPage = page != null,
-                isProcessing = isProcessing,
-                onRenameClick = onRenameClick,
-                onAddPages = onAddPages,
-                onPickImages = onPickImages,
-                onExportPdf = onExportPdf,
-                onExportTxt = onExportTxt,
-                onShareText = { shareText(context, document.fullText) },
-                onSharePage = { page?.let { shareImage(context, it.imagePath) } },
-                onRotatePage = onRotatePage,
-                onReprocessPage = onReprocessPage,
-                onDeletePage = onDeletePage,
-                onDeleteDocument = onDeleteDocument,
-                onOpenHistory = onOpenHistory
+        ActionsPanel(
+            hasPage = page != null,
+            isProcessing = isProcessing,
+            onRenameClick = onRenameClick,
+            onAddPages = onAddPages,
+            onPickImages = onPickImages,
+            onExportPdf = onExportPdf,
+            onExportTxt = onExportTxt,
+            onShareText = { shareText(context, textState.text) },
+            onSharePage = { page?.let { shareImage(context, it.imagePath) } },
+            onRotatePage = onRotatePage,
+            onReprocessPage = onReprocessPage,
+            onDeletePage = onDeletePage,
+            onDeleteDocument = onDeleteDocument,
+            onOpenHistory = onOpenHistory
+        )
+
+        SectionHeader(title = stringResource(R.string.result_full_text))
+
+        OutlinedTextField(
+            value = textState,
+            onValueChange = { textState = it },
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .focusRequester(focusRequester),
+            placeholder = { Text(text = stringResource(R.string.result_page_empty)) },
+            textStyle = MaterialTheme.typography.bodyLarge,
+            minLines = 6
+        )
+
+        Text(
+            text = stringResource(R.string.result_edit_hint),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            CompactButton(
+                text = stringResource(R.string.action_copy_all),
+                onClick = { copyToClipboard(context, textState.text) },
+                icon = Icons.Outlined.ContentCopy
+            )
+            CompactButton(
+                text = stringResource(R.string.action_select_all),
+                onClick = {
+                    focusRequester.requestFocus()
+                    textState = TextFieldValue(
+                        textState.text,
+                        TextRange(0, textState.text.length),
+                        textState.composition
+                    )
+                },
+                icon = Icons.Outlined.SelectAll
+            )
+            CompactButton(
+                text = stringResource(R.string.action_clear),
+                onClick = { textState = TextFieldValue("") },
+                icon = Icons.Outlined.Clear
+            )
+            CompactButton(
+                text = stringResource(R.string.action_reprocess),
+                onClick = onReprocessPage,
+                enabled = page != null && !isProcessing,
+                icon = Icons.Outlined.Refresh
             )
         }
-
-        item {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                ResultSection.values().forEach { option ->
-                    ChoiceChip(
-                        label = stringResource(option.labelRes),
-                        selected = option == section,
-                        onClick = { onSectionChange(option) }
-                    )
-                }
-            }
-        }
-
-        when (section) {
-            ResultSection.LINES -> {
-                item {
-                    SectionHeader(
-                        title = stringResource(R.string.result_lines, page?.lines?.size ?: 0)
-                    )
-                }
-                if (page == null || page.lines.isEmpty()) {
-                    item {
-                        EmptyState(
-                            icon = Icons.Outlined.Description,
-                            text = if (isProcessing) {
-                                stringResource(R.string.processing_title)
-                            } else {
-                                stringResource(R.string.result_page_empty)
-                            }
-                        )
-                    }
-                } else {
-                    itemsIndexed(page.lines, key = { _, line -> line.index }) { position, line ->
-                        TextLineCard(
-                            line = line,
-                            position = position + 1,
-                            selected = line.index == selectedLine,
-                            colorfulCards = colorfulCards,
-                            accent = cardAccent(line.index),
-                            onSelect = { onSelectLine(line.index) }
-                        )
-                    }
-                }
-            }
-
-            ResultSection.NUMBERS -> {
-                item {
-                    SectionHeader(
-                        title = stringResource(R.string.result_numbers, page?.numbers?.size ?: 0),
-                        content = {
-                            if (page != null && page.numbers.isNotEmpty()) {
-                                TextButton(onClick = {
-                                    copyToClipboard(context, page.numbersText)
-                                }) {
-                                    Text(text = stringResource(R.string.action_copy_numbers))
-                                }
-                            }
-                        }
-                    )
-                }
-                if (page == null || page.numbers.isEmpty()) {
-                    item {
-                        EmptyState(
-                            icon = Icons.Outlined.Description,
-                            text = stringResource(R.string.result_numbers_empty)
-                        )
-                    }
-                } else {
-                    itemsIndexed(page.numbers) { position, number ->
-                        NumberCard(
-                            position = position + 1,
-                            number = number,
-                            accent = accent,
-                            onCopy = { value -> copyToClipboard(context, value) }
-                        )
-                    }
-                }
-            }
-
-            ResultSection.TEXT -> {
-                item {
-                    SectionHeader(
-                        title = stringResource(R.string.result_full_text)
-                    )
-                }
-                item {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surface
-                        )
-                    ) {
-                        if (page == null || page.fullText.isBlank()) {
-                            Text(
-                                text = stringResource(R.string.result_page_empty),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(14.dp)
-                            )
-                        } else {
-                            SelectionContainer {
-                                Text(
-                                    text = page.fullText,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    modifier = Modifier.padding(14.dp)
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        item { Spacer(modifier = Modifier.height(48.dp)) }
     }
 }
 
@@ -952,221 +832,4 @@ private fun ActionsPanel(
             }
         }
     }
-}
-
-@Composable
-private fun TextLineCard(
-    line: OcrLine,
-    position: Int,
-    selected: Boolean,
-    colorfulCards: Boolean,
-    accent: Color,
-    onSelect: () -> Unit
-) {
-    val highlighted = remember(line.text, accent) { highlightNumbers(line.text, accent) }
-    val numbers = remember(line.text) { NumberExtractor.findAll(line.text).map { it.value }.toList() }
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .border(
-                width = if (selected) 2.dp else 1.dp,
-                color = if (selected) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    accent.copy(alpha = 0.55f)
-                },
-                shape = RoundedCornerShape(12.dp)
-            )
-            .clickable(onClick = onSelect),
-        colors = CardDefaults.cardColors(
-            containerColor = if (selected) {
-                MaterialTheme.colorScheme.primaryContainer
-            } else {
-                MaterialTheme.colorScheme.surface
-            }
-        )
-    ) {
-        Row(
-            modifier = Modifier.padding(start = 10.dp, end = 10.dp, top = 8.dp, bottom = 8.dp),
-            verticalAlignment = Alignment.Top
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(26.dp)
-                    .clip(CircleShape)
-                    .background(
-                        if (colorfulCards) accent else MaterialTheme.colorScheme.primary
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = position.toString(),
-                    color = Color.White,
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-            Spacer(modifier = Modifier.width(8.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                SelectionContainer {
-                    Text(
-                        text = highlighted,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
-                if (line.confidence > 0f) {
-                    Spacer(modifier = Modifier.height(2.dp))
-                    ConfidenceBadge(confidence = line.confidence)
-                }
-                if (numbers.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = stringResource(R.string.result_tab_numbers),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        numbers.forEach { value ->
-                            NumberCopyChip(value = value, accent = accent)
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun NumberCopyChip(
-    value: String,
-    accent: Color
-) {
-    val context = LocalContext.current
-    Row(
-        modifier = Modifier
-            .clip(RoundedCornerShape(50))
-            .background(accent.copy(alpha = 0.12f))
-            .border(1.dp, accent.copy(alpha = 0.5f), RoundedCornerShape(50))
-            .clickable { copyToClipboard(context, value) }
-            .padding(start = 10.dp, end = 8.dp, top = 4.dp, bottom = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = value,
-            style = MaterialTheme.typography.labelLarge,
-            fontFamily = FontFamily.Monospace,
-            color = accent
-        )
-        Spacer(modifier = Modifier.width(6.dp))
-        Icon(
-            imageVector = Icons.Outlined.ContentCopy,
-            contentDescription = stringResource(R.string.action_copy_number),
-            tint = accent,
-            modifier = Modifier.size(16.dp)
-        )
-    }
-}
-
-@Composable
-private fun ConfidenceBadge(confidence: Float) {
-    val value = confidence.roundToInt().coerceIn(0, 100)
-    val color = when {
-        value >= 80 -> ConfidenceHigh
-        value >= 60 -> ConfidenceMedium
-        else -> ConfidenceLow
-    }
-    Text(
-        text = stringResource(R.string.result_confidence, value),
-        style = MaterialTheme.typography.labelSmall,
-        color = color,
-        modifier = Modifier
-            .clip(RoundedCornerShape(50))
-            .background(color.copy(alpha = 0.12f))
-            .padding(horizontal = 6.dp, vertical = 1.dp)
-    )
-}
-
-@Composable
-private fun NumberCard(
-    position: Int,
-    number: OcrNumber,
-    accent: Color,
-    onCopy: (String) -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .border(
-                width = 1.dp,
-                color = accent.copy(alpha = 0.55f),
-                shape = RoundedCornerShape(12.dp)
-            ),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-    ) {
-        Row(
-            modifier = Modifier.padding(start = 10.dp, end = 2.dp, top = 6.dp, bottom = 6.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(24.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceVariant),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = position.toString(),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            Spacer(modifier = Modifier.width(8.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = number.value,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontFamily = FontFamily.Monospace,
-                    color = accent
-                )
-                if (number.normalized != number.value) {
-                    Text(
-                        text = stringResource(R.string.result_numbers_normalized, number.normalized),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-            if (number.normalized != number.value) {
-                TextButton(onClick = { onCopy(number.normalized) }) {
-                    Text(text = stringResource(R.string.result_copy_latin))
-                }
-            }
-            CopyIconButton(text = number.value)
-        }
-    }
-}
-
-private fun highlightNumbers(text: String, accent: Color): AnnotatedString = buildAnnotatedString {
-    var cursor = 0
-    NumberExtractor.findAll(text).forEach { match ->
-        val start = match.range.first
-        if (start > cursor) append(text.substring(cursor, start))
-        withStyle(
-            SpanStyle(
-                color = accent,
-                fontWeight = FontWeight.SemiBold,
-                background = accent.copy(alpha = 0.12f)
-            )
-        ) {
-            append(match.value)
-        }
-        cursor = match.range.last + 1
-    }
-    if (cursor < text.length) append(text.substring(cursor))
 }

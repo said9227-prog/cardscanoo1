@@ -76,8 +76,12 @@ dependencies {
     implementation("androidx.camera:camera-lifecycle:1.3.4")
     implementation("androidx.camera:camera-view:1.3.4")
 
-    // On-device OCR engine (Tesseract 5.5, Apache-2.0)
+    // On-device OCR: Tesseract stays for Arabic (ML Kit has no offline Arabic model).
     implementation("cz.adaptech.tesseract4android:tesseract4android:4.9.0")
+
+    // Google ML Kit text recognition v2 (Latin/digits). Bundled model = fully offline.
+    // Used for English and as a high-accuracy number pass in the hybrid engine.
+    implementation("com.google.mlkit:text-recognition:16.0.1")
 
     debugImplementation("androidx.compose.ui:ui-tooling")
 }

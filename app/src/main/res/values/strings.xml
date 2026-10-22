@@ -41,6 +41,10 @@
     <string name="camera_permission_title">إذن الكاميرا مطلوب</string>
     <string name="camera_permission_message">يحتاج التطبيق إلى الكاميرا لتصوير المستندات. يمكنك أيضاً اختيار صور من الجهاز بدون إذن الكاميرا.</string>
     <string name="camera_grant">منح الإذن</string>
+    <string name="camera_card_mode">وضع البطاقات الصغيرة</string>
+    <string name="camera_document_mode">وضع المستندات</string>
+    <string name="camera_card_hint">ضع البطاقة أو الورقة الصغيرة داخل الإطار، وسيتم قصّها تلقائياً.</string>
+    <string name="camera_document_hint">ضع الورقة كاملة داخل الإطار، واضغط على الشاشة للتركيز.</string>
     <string name="error_capture">تعذر التقاط الصورة، حاول مرة أخرى.</string>
 
     <string name="processing_title">جارٍ استخراج النص…</string>
@@ -61,6 +65,7 @@
     <string name="result_title_hint">عنوان المستند</string>
     <string name="result_page_empty">لا يوجد نص في هذه الصفحة بعد.</string>
     <string name="result_confidence">الثقة: %1$d%%</string>
+    <string name="result_edit_hint">يمكنك تعديل النص مباشرة قبل النسخ أو المشاركة أو التصدير.</string>
 
     <string name="action_copy">نسخ</string>
     <string name="action_copy_all">نسخ كل النص</string>
@@ -89,6 +94,7 @@
     <string name="action_undo">تراجع</string>
     <string name="action_select">تحديد</string>
     <string name="action_select_all">تحديد الكل</string>
+    <string name="action_clear">مسح النص</string>
     <string name="action_clear_selection">إلغاء التحديد</string>
     <string name="action_cancel_processing">إيقاف المعالجة</string>
     <string name="action_load_more">عرض المزيد</string>
@@ -149,7 +155,7 @@
     <string name="settings_colorful_cards">بطاقات نصوص مميزة بالألوان</string>
     <string name="settings_colorful_cards_hint">تمييز كل سطر بشريط ولون ودرجة ثقة خاصة.</string>
     <string name="settings_about_title">عن التطبيق</string>
-    <string name="settings_about_text">يعمل التعرف على النصوص بالكامل داخل الجهاز دون إنترنت.\nالإصدار %1$s</string>
+    <string name="settings_about_text">يعمل التعرف على النصوص بالكامل داخل الجهاز دون إنترنت (‏ML Kit للإنجليزية والأرقام، وTesseract للعربية).\nالإصدار %1$s</string>
 
     <string name="error_load_image">تعذر تحميل الصورة.</string>
     <string name="error_engine_init">تعذر تهيئة محرك التعرف على النصوص. تأكد من توفر مساحة كافية في الجهاز.</string>

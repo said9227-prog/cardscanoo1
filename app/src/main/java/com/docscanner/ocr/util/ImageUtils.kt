@@ -11,6 +11,7 @@ import android.graphics.Paint
 import android.net.Uri
 import androidx.exifinterface.media.ExifInterface
 import com.docscanner.ocr.model.PreprocessMode
+import java.io.ByteArrayOutputStream
 import java.io.File
 import kotlin.math.abs
 import kotlin.math.max
@@ -20,11 +21,14 @@ import kotlin.math.tan
 
 object ImageUtils {
 
-    /** Longest side of the bitmap that is handed to Tesseract. */
-    const val MAX_OCR_DIMENSION = 2400
+    /** Longest side of the bitmap that is handed to the OCR engines. */
+    const val MAX_OCR_DIMENSION = 2600
 
     /** Longest side of a stored page / preview bitmap. */
     const val MAX_DECODE_DIMENSION = 2600
+
+    /** Small images (distant small cards) are upscaled to this before OCR. */
+    private const val MIN_OCR_DIMENSION = 1400
 
     private const val MAX_SKEW_SAMPLE = 500
     private const val MAX_SKEW_DEGREES = 8f
@@ -93,7 +97,9 @@ object ImageUtils {
      * lit pages and uses a contrast-boosted grayscale copy otherwise.
      */
     fun prepareForOcr(source: Bitmap, mode: PreprocessMode): Bitmap {
-        val scaled = scaleDown(source, MAX_OCR_DIMENSION)
+        val sized = scaleDown(source, MAX_OCR_DIMENSION)
+        val scaled = ensureMinSize(sized, MIN_OCR_DIMENSION)
+        if (scaled !== sized && sized !== source && !sized.isRecycled) sized.recycle()
         val resolved = when (mode) {
             PreprocessMode.AUTO ->
                 if (isLowContrast(scaled)) PreprocessMode.BINARIZED else PreprocessMode.GRAYSCALE
@@ -112,6 +118,20 @@ object ImageUtils {
         val longestSide = max(source.width, source.height)
         if (longestSide <= maxDimension) return source
         val ratio = maxDimension.toFloat() / longestSide.toFloat()
+        val width = (source.width * ratio).roundToInt().coerceAtLeast(1)
+        val height = (source.height * ratio).roundToInt().coerceAtLeast(1)
+        return Bitmap.createScaledBitmap(source, width, height, true)
+    }
+
+    /**
+     * Upscales tiny pages (e.g. a small WiFi card photographed from a distance) so
+     * each character is large enough for the recognisers. Capped at 2x to keep
+     * memory use predictable.
+     */
+    fun ensureMinSize(source: Bitmap, minDimension: Int): Bitmap {
+        val longestSide = max(source.width, source.height)
+        if (longestSide <= 0 || longestSide >= minDimension) return source
+        val ratio = (minDimension.toFloat() / longestSide.toFloat()).coerceAtMost(2f)
         val width = (source.width * ratio).roundToInt().coerceAtLeast(1)
         val height = (source.height * ratio).roundToInt().coerceAtLeast(1)
         return Bitmap.createScaledBitmap(source, width, height, true)
@@ -192,6 +212,39 @@ object ImageUtils {
             if (!bitmap.isRecycled) bitmap.recycle()
         }
     }
+
+    /**
+     * Crops the centre of a captured JPEG (used by the small-card camera mode).
+     * Returns upright JPEG bytes, so the caller passes rotation 0 to the OCR pipeline.
+     */
+    fun cropCenterJpeg(
+        bytes: ByteArray,
+        rotationDegrees: Int,
+        widthFraction: Float,
+        heightFraction: Float,
+        quality: Int = 95
+    ): ByteArray? = runCatching {
+        val source = decodeJpeg(bytes, rotationDegrees, MAX_DECODE_DIMENSION)
+            ?: return@runCatching null
+        try {
+            val width = (source.width * widthFraction.coerceIn(0.1f, 1f))
+                .roundToInt().coerceIn(1, source.width)
+            val height = (source.height * heightFraction.coerceIn(0.1f, 1f))
+                .roundToInt().coerceIn(1, source.height)
+            val left = ((source.width - width) / 2).coerceAtLeast(0)
+            val top = ((source.height - height) / 2).coerceAtLeast(0)
+            val cropped = Bitmap.createBitmap(source, left, top, width, height)
+            try {
+                val output = ByteArrayOutputStream()
+                cropped.compress(Bitmap.CompressFormat.JPEG, quality, output)
+                output.toByteArray()
+            } finally {
+                if (cropped !== source && !cropped.isRecycled) cropped.recycle()
+            }
+        } finally {
+            if (!source.isRecycled) source.recycle()
+        }
+    }.getOrNull()
 
     /** Writes a page image (optionally straightened) plus its thumbnail. */
     fun saveBitmapAsPage(
@@ -371,7 +424,9 @@ object ImageUtils {
         if (count == 0) return false
         val mean = sum / count
         val variance = square / count - mean * mean
-        return variance < 900.0
+        // Only binarise really flat pages; thin digits on normal photos survive better
+        // with the contrast-boosted grayscale path.
+        return variance < 500.0
     }
 
     private fun toGrayscale(source: Bitmap): Bitmap {
@@ -420,7 +475,10 @@ object ImageUtils {
             }
         }
 
-        val radius = (min(width, height) / 16).coerceAtLeast(8)
+        var graySum = 0L
+        for (value in gray) graySum += value
+        val thresholdOffset = max(8, (graySum / gray.size / 40).toInt())
+        val radius = (min(width, height) / 20).coerceAtLeast(8)
         val output = IntArray(pixels.size)
         val black = 0xFF000000.toInt()
         val white = 0xFFFFFFFF.toInt()
@@ -438,7 +496,7 @@ object ImageUtils {
                     integral[y1 * stride + x1]
                 val mean = sum / count
                 val value = gray[y * width + x]
-                output[y * width + x] = if (value < mean - 10) black else white
+                output[y * width + x] = if (value < mean - thresholdOffset) black else white
             }
         }
 

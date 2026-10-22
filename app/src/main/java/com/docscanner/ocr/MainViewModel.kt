@@ -18,9 +18,9 @@ import com.docscanner.ocr.model.PreprocessMode
 import com.docscanner.ocr.model.ScanDocument
 import com.docscanner.ocr.model.ScanPage
 import com.docscanner.ocr.model.ThemeMode
+import com.docscanner.ocr.ocr.HybridOcrEngine
 import com.docscanner.ocr.ocr.NumberExtractor
 import com.docscanner.ocr.ocr.OcrEngine
-import com.docscanner.ocr.ocr.TesseractOcrEngine
 import com.docscanner.ocr.util.ImageUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -71,7 +71,7 @@ data class UiState(
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val app = application
-    private val engine: OcrEngine = TesseractOcrEngine(application)
+    private val engine: OcrEngine = HybridOcrEngine(application)
     private val repository = DocumentRepository(application)
     private val settingsRepository = SettingsRepository.get(application)
 
@@ -493,7 +493,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             page.imagePath,
             ImageUtils.MAX_DECODE_DIMENSION
         ) ?: return@withContext null
-        val prepared = runCatching { ImageUtils.prepareForOcr(source, mode) }.getOrNull()
+        // ML Kit works best on colour/grayscale; aggressive thresholding can erase
+        // thin digits. Tesseract still gets the user's chosen mode.
+        val ocrMode = if (language == OcrLanguage.ENGLISH && mode == PreprocessMode.AUTO) {
+            PreprocessMode.GRAYSCALE
+        } else {
+            mode
+        }
+        val prepared = runCatching { ImageUtils.prepareForOcr(source, ocrMode) }.getOrNull()
         if (prepared == null) {
             if (!source.isRecycled) source.recycle()
             return@withContext null
@@ -509,7 +516,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 val lines = result.lines
                     .filter { line ->
                         minConfidence <= 0 || line.confidence <= 0f ||
-                            line.confidence >= minConfidence
+                            line.confidence >= minConfidence ||
+                            NumberExtractor.NUMBER_REGEX.containsMatchIn(line.text)
                     }
                     .mapIndexed { index, line ->
                         line.copy(index = index, box = line.box?.scaled(scaleX, scaleY))
@@ -653,7 +661,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun reprocessPage(pageId: String) {
         val document = _state.value.document ?: return
-        runOcr(document.id, listOf(pageId), document.language, PreprocessMode.BINARIZED)
+        runOcr(document.id, listOf(pageId), document.language, PreprocessMode.AUTO)
     }
 
     fun exportDocument(uri: Uri, format: ExportFormat) {
