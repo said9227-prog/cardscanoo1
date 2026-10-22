@@ -14,10 +14,12 @@
     <string name="title_settings">الإعدادات</string>
 
     <string name="home_capture">تصوير مستند</string>
-    <string name="home_capture_desc">التقط عدة صفحات، وسيستخرج التطبيق النصوص والأرقام كما هي وبنفس ترتيبها، مع تصحيح ميل الصفحة تلقائياً.</string>
+    <string name="home_capture_hint">التقط صفحة أو أكثر ثم اضغط إنهاء.</string>
     <string name="home_pick_multiple">اختيار صور من الجهاز</string>
     <string name="home_recent">أحدث المستندات</string>
     <string name="home_no_documents">لا توجد مستندات بعد. ابدأ بتصوير صفحة أو اختيار صورة.</string>
+    <string name="home_numbers_title">الأرقام المستخرجة</string>
+    <string name="home_numbers_empty">لا توجد أرقام في هذا المستند.</string>
     <string name="home_history">السجل (%1$d)</string>
     <string name="home_tips_title">نصائح لدقة أفضل</string>
     <string name="home_tip_1">صوّر الورقة على سطح مستوٍ وبإضاءة جيدة.</string>

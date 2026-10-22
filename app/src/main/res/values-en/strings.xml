@@ -14,10 +14,12 @@
     <string name="title_settings">Settings</string>
 
     <string name="home_capture">Scan document</string>
-    <string name="home_capture_desc">Capture multiple pages and the app extracts the text and numbers exactly as they are, in the same order, with automatic skew correction.</string>
+    <string name="home_capture_hint">Capture one or more pages, then tap Finish.</string>
     <string name="home_pick_multiple">Pick images from device</string>
     <string name="home_recent">Recent documents</string>
     <string name="home_no_documents">No documents yet. Start by capturing a page or picking an image.</string>
+    <string name="home_numbers_title">Extracted numbers</string>
+    <string name="home_numbers_empty">No numbers in this document.</string>
     <string name="home_history">History (%1$d)</string>
     <string name="home_tips_title">Tips for better accuracy</string>
     <string name="home_tip_1">Photograph the paper on a flat surface with good lighting.</string>

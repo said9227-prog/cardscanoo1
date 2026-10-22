@@ -130,6 +130,7 @@ data class DocumentSummary(
     val preview: String,
     val pageCount: Int,
     val numbersCount: Int,
+    val numbers: List<String>,
     val languageCode: String,
     val thumbPath: String,
     val createdAt: Long,

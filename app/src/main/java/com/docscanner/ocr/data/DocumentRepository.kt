@@ -222,7 +222,10 @@ class DocumentRepository(context: Context) {
     fun loadSummaries(): List<DocumentSummary> {
         if (indexFile.exists()) {
             val parsed = runCatching { parseSummaries(indexFile.readText()) }.getOrNull()
-            if (parsed != null) return parsed
+            // Older indexes did not store the numbers themselves. Rebuild once so
+            // the home screen can show them in document order.
+            val numbersMissing = parsed?.any { it.numbers.size != it.numbersCount } == true
+            if (parsed != null && !numbersMissing) return parsed
         }
         return rebuildIndex()
     }
@@ -571,6 +574,7 @@ class DocumentRepository(context: Context) {
         put("preview", summary.preview)
         put("pageCount", summary.pageCount)
         put("numbersCount", summary.numbersCount)
+        put("numbers", JSONArray().apply { summary.numbers.forEach { put(it) } })
         put("language", summary.languageCode)
         put("thumbPath", summary.thumbPath)
         put("createdAt", summary.createdAt)
@@ -588,6 +592,11 @@ class DocumentRepository(context: Context) {
                     preview = json.optString("preview"),
                     pageCount = json.optInt("pageCount", 1),
                     numbersCount = json.optInt("numbersCount", 0),
+                    numbers = json.optJSONArray("numbers")?.let { numbersArray ->
+                        (0 until numbersArray.length())
+                            .map { numbersArray.optString(it) }
+                            .filter { it.isNotBlank() }
+                    }.orEmpty(),
                     languageCode = json.optString("language", OcrLanguage.ENGLISH.code),
                     thumbPath = json.optString("thumbPath"),
                     createdAt = json.optLong("createdAt"),
@@ -610,6 +619,7 @@ class DocumentRepository(context: Context) {
             preview = preview.take(160),
             pageCount = document.pages.size,
             numbersCount = document.numbers.size,
+            numbers = document.numbers.map { it.value },
             languageCode = document.languageCode,
             thumbPath = document.pages.firstOrNull()?.thumbPath.orEmpty(),
             createdAt = document.createdAt,
