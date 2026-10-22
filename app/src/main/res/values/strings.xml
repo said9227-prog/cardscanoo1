@@ -65,6 +65,7 @@
     <string name="action_copy">نسخ</string>
     <string name="action_copy_all">نسخ كل النص</string>
     <string name="action_copy_numbers">نسخ كل الأرقام</string>
+    <string name="action_copy_number">نسخ الرقم</string>
     <string name="action_copy_line">نسخ هذا السطر</string>
     <string name="action_copy_page">نسخ نص الصفحة</string>
     <string name="action_export_pdf">تصدير PDF</string>

@@ -65,6 +65,7 @@
     <string name="action_copy">Copy</string>
     <string name="action_copy_all">Copy all text</string>
     <string name="action_copy_numbers">Copy all numbers</string>
+    <string name="action_copy_number">Copy number</string>
     <string name="action_copy_line">Copy this line</string>
     <string name="action_copy_page">Copy page text</string>
     <string name="action_export_pdf">Export PDF</string>

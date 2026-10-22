@@ -714,8 +714,6 @@ private fun TextPane(
                 onPickImages = onPickImages,
                 onExportPdf = onExportPdf,
                 onExportTxt = onExportTxt,
-                hasText = document.fullText.isNotBlank(),
-                onCopyAll = { copyToClipboard(context, document.fullText) },
                 onShareText = { shareText(context, document.fullText) },
                 onSharePage = { page?.let { shareImage(context, it.imagePath) } },
                 onRotatePage = onRotatePage,
@@ -747,16 +745,7 @@ private fun TextPane(
             ResultSection.LINES -> {
                 item {
                     SectionHeader(
-                        title = stringResource(R.string.result_lines, page?.lines?.size ?: 0),
-                        content = {
-                            if (page != null && page.fullText.isNotBlank()) {
-                                TextButton(onClick = {
-                                    copyToClipboard(context, page.fullText)
-                                }) {
-                                    Text(text = stringResource(R.string.action_copy_page))
-                                }
-                            }
-                        }
+                        title = stringResource(R.string.result_lines, page?.lines?.size ?: 0)
                     )
                 }
                 if (page == null || page.lines.isEmpty()) {
@@ -778,8 +767,7 @@ private fun TextPane(
                             selected = line.index == selectedLine,
                             colorfulCards = colorfulCards,
                             accent = cardAccent(line.index),
-                            onSelect = { onSelectLine(line.index) },
-                            onCopy = { copyToClipboard(context, line.text) }
+                            onSelect = { onSelectLine(line.index) }
                         )
                     }
                 }
@@ -822,15 +810,7 @@ private fun TextPane(
             ResultSection.TEXT -> {
                 item {
                     SectionHeader(
-                        title = stringResource(R.string.result_full_text),
-                        content = {
-                            if (page != null && page.fullText.isNotBlank()) {
-                                CopyIconButton(
-                                    text = page.fullText,
-                                    description = stringResource(R.string.action_copy_page)
-                                )
-                            }
-                        }
+                        title = stringResource(R.string.result_full_text)
                     )
                 }
                 item {
@@ -874,8 +854,6 @@ private fun ActionsPanel(
     onPickImages: () -> Unit,
     onExportPdf: () -> Unit,
     onExportTxt: () -> Unit,
-    hasText: Boolean,
-    onCopyAll: () -> Unit,
     onShareText: () -> Unit,
     onSharePage: () -> Unit,
     onRotatePage: () -> Unit,
@@ -912,12 +890,6 @@ private fun ActionsPanel(
                     text = stringResource(R.string.action_export_txt),
                     onClick = onExportTxt,
                     icon = Icons.Outlined.Description
-                )
-                CompactButton(
-                    text = stringResource(R.string.action_copy_all),
-                    onClick = onCopyAll,
-                    enabled = hasText,
-                    icon = Icons.Outlined.ContentCopy
                 )
                 CompactButton(
                     text = stringResource(R.string.action_share),
@@ -989,10 +961,10 @@ private fun TextLineCard(
     selected: Boolean,
     colorfulCards: Boolean,
     accent: Color,
-    onSelect: () -> Unit,
-    onCopy: () -> Unit
+    onSelect: () -> Unit
 ) {
     val highlighted = remember(line.text, accent) { highlightNumbers(line.text, accent) }
+    val numbers = remember(line.text) { NumberExtractor.findAll(line.text).map { it.value }.toList() }
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -1015,8 +987,8 @@ private fun TextLineCard(
         )
     ) {
         Row(
-            modifier = Modifier.padding(start = 10.dp, end = 2.dp, top = 8.dp, bottom = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier.padding(start = 10.dp, end = 10.dp, top = 8.dp, bottom = 8.dp),
+            verticalAlignment = Alignment.Top
         ) {
             Box(
                 modifier = Modifier
@@ -1046,12 +1018,58 @@ private fun TextLineCard(
                     Spacer(modifier = Modifier.height(2.dp))
                     ConfidenceBadge(confidence = line.confidence)
                 }
+                if (numbers.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = stringResource(R.string.result_tab_numbers),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        numbers.forEach { value ->
+                            NumberCopyChip(value = value, accent = accent)
+                        }
+                    }
+                }
             }
-            CopyIconButton(
-                text = line.text,
-                description = stringResource(R.string.action_copy_line)
-            )
         }
+    }
+}
+
+@Composable
+private fun NumberCopyChip(
+    value: String,
+    accent: Color
+) {
+    val context = LocalContext.current
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(50))
+            .background(accent.copy(alpha = 0.12f))
+            .border(1.dp, accent.copy(alpha = 0.5f), RoundedCornerShape(50))
+            .clickable { copyToClipboard(context, value) }
+            .padding(start = 10.dp, end = 8.dp, top = 4.dp, bottom = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = value,
+            style = MaterialTheme.typography.labelLarge,
+            fontFamily = FontFamily.Monospace,
+            color = accent
+        )
+        Spacer(modifier = Modifier.width(6.dp))
+        Icon(
+            imageVector = Icons.Outlined.ContentCopy,
+            contentDescription = stringResource(R.string.action_copy_number),
+            tint = accent,
+            modifier = Modifier.size(16.dp)
+        )
     }
 }
 
