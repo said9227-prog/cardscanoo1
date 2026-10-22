@@ -19,6 +19,7 @@ import com.docscanner.ocr.model.ScanDocument
 import com.docscanner.ocr.model.ScanPage
 import com.docscanner.ocr.model.ThemeMode
 import com.docscanner.ocr.ocr.MlKitOcrEngine
+import com.docscanner.ocr.ocr.NumberExtractor
 import com.docscanner.ocr.ocr.OcrEngine
 import com.docscanner.ocr.util.ImageUtils
 import kotlinx.coroutines.Dispatchers
