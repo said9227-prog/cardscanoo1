@@ -418,15 +418,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
             try {
                 pageIds.forEachIndexed { index, pageId ->
-                    val page = document.pages.firstOrNull { it.id == pageId }
+                    val currentDocument = document
+                    val page = currentDocument.pages.firstOrNull { it.id == pageId }
                     if (page != null) {
                         val mode = modeOverride ?: _state.value.settings.preprocessMode
                         val result = ocrPage(page, language, mode)
                         if (result == null) {
                             failures++
                         } else {
-                            document = document.copy(
-                                pages = document.pages.map { current ->
+                            val base = currentDocument.copy(
+                                pages = currentDocument.pages.map { current ->
                                     if (current.id == pageId) {
                                         current.copy(
                                             fullText = result.fullText,
@@ -439,15 +440,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                                 },
                                 updatedAt = System.currentTimeMillis()
                             )
-                            if (document.title.isBlank() && result.fullText.isNotBlank()) {
+                            val updated = if (base.title.isBlank() && result.fullText.isNotBlank()) {
                                 val title = result.fullText.lineSequence()
                                     .firstOrNull { it.isNotBlank() }
                                     ?.trim()
                                     ?.take(60)
                                     .orEmpty()
-                                document = document.copy(title = title)
+                                base.copy(title = title)
+                            } else {
+                                base
                             }
-                            val snapshot = document
+                            document = updated
+                            val snapshot = updated
                             withContext(Dispatchers.IO) { repository.saveDocument(snapshot) }
                             _state.update { current ->
                                 current.copy(

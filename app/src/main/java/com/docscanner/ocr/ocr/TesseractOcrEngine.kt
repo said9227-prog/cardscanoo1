@@ -84,7 +84,7 @@ class TesseractOcrEngine(private val context: Context) : OcrEngine {
             runCatching { api.recycle() }
             throw IllegalStateException(context.getString(R.string.error_engine_init))
         }
-        api.setPageSegMode(TessBaseAPI.PSM_AUTO)
+        api.setPageSegMode(TessBaseAPI.PageSegMode.PSM_AUTO)
         baseApi = api
         initializedLanguage = language.code
         return api

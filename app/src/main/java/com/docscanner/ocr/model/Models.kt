@@ -96,7 +96,9 @@ data class ScanPage(
     val lines: List<OcrLine>,
     val numbers: List<OcrNumber>,
     val createdAt: Long
-)
+) {
+    val numbersText: String get() = numbers.joinToString(separator = "\n") { it.value }
+}
 
 /** A multi-page document stored in the app's private storage. */
 data class ScanDocument(
