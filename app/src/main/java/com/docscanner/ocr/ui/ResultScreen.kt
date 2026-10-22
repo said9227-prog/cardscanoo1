@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -18,20 +19,19 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AddPhotoAlternate
+import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Clear
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.Delete
@@ -56,6 +56,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
@@ -78,17 +79,23 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.docscanner.ocr.R
 import com.docscanner.ocr.model.ExportFormat
 import com.docscanner.ocr.model.OcrLine
 import com.docscanner.ocr.model.ScanDocument
 import com.docscanner.ocr.model.ScanPage
+import com.docscanner.ocr.ocr.NumberExtractor
 import com.docscanner.ocr.ui.components.CompactButton
-import com.docscanner.ocr.ui.components.SectionHeader
 import com.docscanner.ocr.ui.components.copyToClipboard
 import com.docscanner.ocr.ui.components.rememberThumbnail
 import com.docscanner.ocr.ui.components.shareImage
@@ -111,7 +118,6 @@ fun ResultScreen(
     processedCount: Int,
     totalToProcess: Int,
     showBoxes: Boolean,
-    colorfulCards: Boolean,
     onToggleBoxes: (Boolean) -> Unit,
     onSelectPage: (Int) -> Unit,
     onRename: (String) -> Unit,
@@ -173,7 +179,6 @@ fun ResultScreen(
                 TextPane(
                     document = document,
                     page = page,
-                    colorfulCards = colorfulCards,
                     isProcessing = isProcessing,
                     onRenameClick = {
                         renameText = document.title
@@ -203,13 +208,13 @@ fun ResultScreen(
                         showBoxes = showBoxes,
                         version = document.updatedAt,
                         modifier = Modifier
-                            .weight(1f)
+                            .weight(0.34f)
                             .fillMaxHeight()
                             .padding(8.dp)
                     )
                     textPane(
                         Modifier
-                            .weight(1f)
+                            .weight(0.66f)
                             .fillMaxHeight()
                     )
                 }
@@ -220,12 +225,12 @@ fun ResultScreen(
                     version = document.updatedAt,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(0.42f)
+                        .weight(0.25f)
                 )
                 textPane(
                     Modifier
                         .fillMaxWidth()
-                        .weight(0.58f)
+                        .weight(0.75f)
                 )
             }
         }
@@ -346,9 +351,6 @@ private fun DocumentHeader(
                         document.pages.size,
                         document.linesCount,
                         document.numbers.size
-                    ) + " · " + stringResource(
-                        R.string.result_language,
-                        stringResource(document.language.labelRes)
                     ),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -624,7 +626,6 @@ private fun DocumentPreview(
 private fun TextPane(
     document: ScanDocument,
     page: ScanPage?,
-    colorfulCards: Boolean,
     isProcessing: Boolean,
     onRenameClick: () -> Unit,
     onAddPages: () -> Unit,
@@ -640,8 +641,21 @@ private fun TextPane(
 ) {
     val context = LocalContext.current
     val focusRequester = remember { FocusRequester() }
+    var editMode by remember(document.id) { mutableStateOf(false) }
     var textState by remember(document.id, document.updatedAt) {
         mutableStateOf(TextFieldValue(document.fullText))
+    }
+    val accent = MaterialTheme.colorScheme.primary
+    val annotatedText = remember(textState.text, accent) {
+        highlightNumbers(textState.text, accent)
+    }
+    val numberRanges = remember(textState.text) {
+        NumberExtractor.findAll(textState.text).map { it.range to it.value }
+    }
+    val muted = MaterialTheme.colorScheme.onSurfaceVariant
+
+    LaunchedEffect(editMode) {
+        if (editMode) runCatching { focusRequester.requestFocus() }
     }
 
     Column(
@@ -667,63 +681,167 @@ private fun TextPane(
             onOpenHistory = onOpenHistory
         )
 
-        SectionHeader(title = stringResource(R.string.result_full_text))
-
-        OutlinedTextField(
-            value = textState,
-            onValueChange = { textState = it },
+        Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f)
-                .focusRequester(focusRequester),
-            placeholder = { Text(text = stringResource(R.string.result_page_empty)) },
-            textStyle = MaterialTheme.typography.bodyLarge,
-            minLines = 6
-        )
-
-        Text(
-            text = stringResource(R.string.result_edit_hint),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                .weight(1f),
+            shape = RoundedCornerShape(18.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.22f))
         ) {
-            CompactButton(
-                text = stringResource(R.string.action_copy_all),
-                onClick = { copyToClipboard(context, textState.text) },
-                icon = Icons.Outlined.ContentCopy
-            )
-            CompactButton(
-                text = stringResource(R.string.action_select_all),
-                onClick = {
-                    focusRequester.requestFocus()
-                    textState = TextFieldValue(
-                        textState.text,
-                        TextRange(0, textState.text.length),
-                        textState.composition
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(14.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(R.string.result_full_text),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = stringResource(
+                                R.string.result_text_stats,
+                                document.linesCount,
+                                document.numbers.size
+                            ),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = muted
+                        )
+                    }
+                    IconButton(onClick = { editMode = !editMode }) {
+                        Icon(
+                            imageVector = if (editMode) {
+                                Icons.Outlined.Check
+                            } else {
+                                Icons.Outlined.Edit
+                            },
+                            contentDescription = stringResource(
+                                if (editMode) R.string.action_done else R.string.action_edit_text
+                            ),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+
+                if (editMode) {
+                    OutlinedTextField(
+                        value = textState,
+                        onValueChange = { textState = it },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .focusRequester(focusRequester),
+                        placeholder = { Text(text = stringResource(R.string.result_page_empty)) },
+                        textStyle = MaterialTheme.typography.bodyLarge.copy(lineHeight = 27.sp),
+                        shape = RoundedCornerShape(12.dp)
                     )
-                },
-                icon = Icons.Outlined.SelectAll
-            )
-            CompactButton(
-                text = stringResource(R.string.action_clear),
-                onClick = { textState = TextFieldValue("") },
-                icon = Icons.Outlined.Clear
-            )
-            CompactButton(
-                text = stringResource(R.string.action_reprocess),
-                onClick = onReprocessPage,
-                enabled = page != null && !isProcessing,
-                icon = Icons.Outlined.Refresh
-            )
+                } else if (textState.text.isBlank()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = stringResource(R.string.result_page_empty),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = muted
+                        )
+                    }
+                } else {
+                    ClickableText(
+                        text = annotatedText,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .verticalScroll(rememberScrollState())
+                            .padding(horizontal = 2.dp),
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            lineHeight = 27.sp,
+                            color = MaterialTheme.colorScheme.onSurface
+                        ),
+                        onClick = { offset ->
+                            numberRanges.firstOrNull { offset in it.first }?.let { (_, value) ->
+                                copyToClipboard(context, value)
+                            }
+                        }
+                    )
+                }
+
+                Text(
+                    text = stringResource(
+                        if (editMode) R.string.result_edit_hint else R.string.result_number_hint
+                    ),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = muted
+                )
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    CompactButton(
+                        text = stringResource(R.string.action_copy_all),
+                        onClick = { copyToClipboard(context, textState.text) },
+                        icon = Icons.Outlined.ContentCopy
+                    )
+                    if (editMode) {
+                        CompactButton(
+                            text = stringResource(R.string.action_select_all),
+                            onClick = {
+                                focusRequester.requestFocus()
+                                textState = TextFieldValue(
+                                    textState.text,
+                                    TextRange(0, textState.text.length),
+                                    textState.composition
+                                )
+                            },
+                            icon = Icons.Outlined.SelectAll
+                        )
+                        CompactButton(
+                            text = stringResource(R.string.action_clear),
+                            onClick = { textState = TextFieldValue("") },
+                            icon = Icons.Outlined.Clear
+                        )
+                    }
+                    CompactButton(
+                        text = stringResource(R.string.action_reprocess),
+                        onClick = onReprocessPage,
+                        enabled = page != null && !isProcessing,
+                        icon = Icons.Outlined.Refresh
+                    )
+                }
+            }
         }
     }
 }
+
+private fun highlightNumbers(text: String, accent: Color): AnnotatedString =
+    buildAnnotatedString {
+        var cursor = 0
+        NumberExtractor.findAll(text).forEach { match ->
+            if (match.range.first > cursor) {
+                append(text.substring(cursor, match.range.first))
+            }
+            withStyle(
+                SpanStyle(
+                    color = accent,
+                    fontWeight = FontWeight.SemiBold,
+                    background = accent.copy(alpha = 0.12f)
+                )
+            ) {
+                append(match.value)
+            }
+            cursor = match.range.last + 1
+        }
+        if (cursor < text.length) append(text.substring(cursor))
+    }
 
 @Composable
 private fun ActionsPanel(
@@ -746,90 +864,78 @@ private fun ActionsPanel(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
-        Column(
-            modifier = Modifier.padding(8.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState())
+                .padding(6.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                CompactButton(
-                    text = stringResource(R.string.action_rename),
-                    onClick = onRenameClick,
-                    icon = Icons.Outlined.Edit
-                )
-                CompactButton(
-                    text = stringResource(R.string.action_export_pdf),
-                    onClick = onExportPdf,
-                    icon = Icons.Outlined.PictureAsPdf
-                )
-                CompactButton(
-                    text = stringResource(R.string.action_export_txt),
-                    onClick = onExportTxt,
-                    icon = Icons.Outlined.Description
-                )
-                CompactButton(
-                    text = stringResource(R.string.action_share),
-                    onClick = onShareText,
-                    icon = Icons.Outlined.Share
-                )
-                CompactButton(
-                    text = stringResource(R.string.action_share_page_image),
-                    onClick = onSharePage,
-                    enabled = hasPage,
-                    icon = Icons.Outlined.Share
-                )
-                CompactButton(
-                    text = stringResource(R.string.action_add_pages),
-                    onClick = onAddPages,
-                    icon = Icons.Outlined.PhotoCamera
-                )
-                CompactButton(
-                    text = stringResource(R.string.action_add_images),
-                    onClick = onPickImages,
-                    icon = Icons.Outlined.AddPhotoAlternate
-                )
-                CompactButton(
-                    text = stringResource(R.string.title_history),
-                    onClick = onOpenHistory,
-                    icon = Icons.Outlined.History
-                )
-            }
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                CompactButton(
-                    text = stringResource(R.string.action_rotate),
-                    onClick = onRotatePage,
-                    enabled = hasPage && !isProcessing,
-                    icon = Icons.Outlined.RotateRight
-                )
-                CompactButton(
-                    text = stringResource(R.string.action_reprocess),
-                    onClick = onReprocessPage,
-                    enabled = hasPage && !isProcessing,
-                    icon = Icons.Outlined.Refresh
-                )
-                CompactButton(
-                    text = stringResource(R.string.action_delete_page),
-                    onClick = onDeletePage,
-                    enabled = hasPage && !isProcessing,
-                    icon = Icons.Outlined.Delete
-                )
-                CompactButton(
-                    text = stringResource(R.string.action_delete_document),
-                    onClick = onDeleteDocument,
-                    enabled = !isProcessing,
-                    icon = Icons.Outlined.Delete
-                )
-            }
+            CompactButton(
+                text = stringResource(R.string.action_rename),
+                onClick = onRenameClick,
+                icon = Icons.Outlined.Edit
+            )
+            CompactButton(
+                text = stringResource(R.string.action_export_pdf),
+                onClick = onExportPdf,
+                icon = Icons.Outlined.PictureAsPdf
+            )
+            CompactButton(
+                text = stringResource(R.string.action_export_txt),
+                onClick = onExportTxt,
+                icon = Icons.Outlined.Description
+            )
+            CompactButton(
+                text = stringResource(R.string.action_share),
+                onClick = onShareText,
+                icon = Icons.Outlined.Share
+            )
+            CompactButton(
+                text = stringResource(R.string.action_share_page_image),
+                onClick = onSharePage,
+                enabled = hasPage,
+                icon = Icons.Outlined.Share
+            )
+            CompactButton(
+                text = stringResource(R.string.action_add_pages),
+                onClick = onAddPages,
+                icon = Icons.Outlined.PhotoCamera
+            )
+            CompactButton(
+                text = stringResource(R.string.action_add_images),
+                onClick = onPickImages,
+                icon = Icons.Outlined.AddPhotoAlternate
+            )
+            CompactButton(
+                text = stringResource(R.string.title_history),
+                onClick = onOpenHistory,
+                icon = Icons.Outlined.History
+            )
+            CompactButton(
+                text = stringResource(R.string.action_rotate),
+                onClick = onRotatePage,
+                enabled = hasPage && !isProcessing,
+                icon = Icons.Outlined.RotateRight
+            )
+            CompactButton(
+                text = stringResource(R.string.action_reprocess),
+                onClick = onReprocessPage,
+                enabled = hasPage && !isProcessing,
+                icon = Icons.Outlined.Refresh
+            )
+            CompactButton(
+                text = stringResource(R.string.action_delete_page),
+                onClick = onDeletePage,
+                enabled = hasPage && !isProcessing,
+                icon = Icons.Outlined.Delete
+            )
+            CompactButton(
+                text = stringResource(R.string.action_delete_document),
+                onClick = onDeleteDocument,
+                enabled = !isProcessing,
+                icon = Icons.Outlined.Delete
+            )
         }
     }
 }

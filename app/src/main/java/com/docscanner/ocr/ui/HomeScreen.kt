@@ -7,7 +7,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -48,8 +47,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.docscanner.ocr.R
 import com.docscanner.ocr.model.DocumentSummary
-import com.docscanner.ocr.model.OcrLanguage
-import com.docscanner.ocr.ui.components.ChoiceChip
 import com.docscanner.ocr.ui.components.rememberThumbnail
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -57,9 +54,7 @@ import java.util.Locale
 
 @Composable
 fun HomeScreen(
-    language: OcrLanguage,
     summaries: List<DocumentSummary>,
-    onLanguageSelected: (OcrLanguage) -> Unit,
     onOpenCamera: () -> Unit,
     onPickImages: (List<Uri>) -> Unit,
     onOpenHistory: () -> Unit,
@@ -166,36 +161,6 @@ fun HomeScreen(
                         RecentDocumentRow(
                             summary = summary,
                             onClick = { onOpenDocument(summary.id) }
-                        )
-                    }
-                }
-            }
-        }
-
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Text(
-                    text = stringResource(R.string.home_language),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    OcrLanguage.values().forEach { option ->
-                        ChoiceChip(
-                            label = stringResource(option.labelRes),
-                            selected = option == language,
-                            onClick = { onLanguageSelected(option) }
                         )
                     }
                 }

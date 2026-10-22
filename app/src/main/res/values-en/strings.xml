@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Document Scanner</string>
-    <string name="app_tagline">Capture paper and extract text and numbers in order</string>
     <string name="app_version">2.0.0</string>
 
     <string name="shortcut_scan_short">Scan document</string>
@@ -20,18 +19,14 @@
     <string name="home_recent">Recent documents</string>
     <string name="home_no_documents">No documents yet. Start by capturing a page or picking an image.</string>
     <string name="home_history">History (%1$d)</string>
-    <string name="home_language">Recognition language</string>
     <string name="home_tips_title">Tips for better accuracy</string>
     <string name="home_tip_1">Photograph the paper on a flat surface with good lighting.</string>
     <string name="home_tip_2">Keep the whole page inside the frame and avoid shadows.</string>
     <string name="home_tip_3">Hold the phone steady while capturing to avoid blur.</string>
-    <string name="home_tip_4">For Arabic and English together, choose “Arabic + English”.</string>
+    <string name="home_tip_4">The app reads English text and Latin digits with high accuracy.</string>
 
-    <string name="lang_arabic">Arabic</string>
     <string name="lang_english">English</string>
-    <string name="lang_arabic_english">Arabic + English</string>
 
-    <string name="camera_take_photo">Capture</string>
     <string name="camera_switch">Switch camera</string>
     <string name="camera_flash">Flash</string>
     <string name="camera_multiple_hint">Capture several pages, then tap “Finish”. Every page is saved immediately so the app stays fast.</string>
@@ -50,29 +45,17 @@
     <string name="processing_title">Extracting text…</string>
     <string name="processing_page">Processing page %1$d of %2$d</string>
 
-    <string name="result_lines">Text lines in order (%1$d)</string>
-    <string name="result_numbers">Numbers in order (%1$d)</string>
-    <string name="result_numbers_empty">No numbers were found on this page.</string>
     <string name="result_full_text">Full text</string>
-    <string name="result_language">Language: %1$s</string>
     <string name="result_overlay">Show text positions on the image</string>
-    <string name="result_numbers_normalized">Number in Latin digits: %1$s</string>
-    <string name="result_copy_latin">Copy as Latin</string>
-    <string name="result_tab_lines">Text</string>
-    <string name="result_tab_numbers">Numbers</string>
-    <string name="result_tab_text">Full text</string>
     <string name="result_doc_stats">%1$d pages · %2$d lines · %3$d numbers</string>
+    <string name="result_text_stats">%1$d lines · %2$d numbers</string>
     <string name="result_title_hint">Document title</string>
     <string name="result_page_empty">This page has no text yet.</string>
-    <string name="result_confidence">Confidence: %1$d%%</string>
-    <string name="result_edit_hint">Edit the text directly before copying, sharing or exporting.</string>
+    <string name="result_number_hint">Tap any number to copy it instantly.</string>
+    <string name="result_edit_hint">Edit the text before copying or sharing it.</string>
 
     <string name="action_copy">Copy</string>
     <string name="action_copy_all">Copy all text</string>
-    <string name="action_copy_numbers">Copy all numbers</string>
-    <string name="action_copy_number">Copy number</string>
-    <string name="action_copy_line">Copy this line</string>
-    <string name="action_copy_page">Copy page text</string>
     <string name="action_export_pdf">Export PDF</string>
     <string name="action_export_txt">Export TXT</string>
     <string name="action_share">Share text</string>
@@ -95,6 +78,8 @@
     <string name="action_select">Select</string>
     <string name="action_select_all">Select all</string>
     <string name="action_clear">Clear text</string>
+    <string name="action_edit_text">Edit text</string>
+    <string name="action_done">Done</string>
     <string name="action_clear_selection">Clear selection</string>
     <string name="action_cancel_processing">Stop processing</string>
     <string name="action_load_more">Load more</string>
@@ -141,23 +126,17 @@
     <string name="preprocess_grayscale">Grayscale</string>
     <string name="preprocess_binarized">Black &amp; white (higher accuracy)</string>
     <string name="preprocess_color">Color</string>
-    <string name="settings_min_confidence">Minimum line confidence: %1$d%%</string>
-    <string name="settings_min_confidence_hint">Lines below this confidence are hidden. Use 0 to show every line.</string>
     <string name="settings_straighten">Auto-straighten pages</string>
     <string name="settings_straighten_hint">Rotate the image before OCR so lines become horizontal.</string>
-    <string name="settings_language">Default recognition language</string>
     <string name="settings_section_display">Display</string>
     <string name="settings_theme">Theme</string>
     <string name="theme_system">System</string>
     <string name="theme_light">Light</string>
     <string name="theme_dark">Dark</string>
     <string name="settings_boxes">Show text positions by default</string>
-    <string name="settings_colorful_cards">Colorful text cards</string>
-    <string name="settings_colorful_cards_hint">Give every line its own accent color and confidence badge.</string>
     <string name="settings_about_title">About</string>
-    <string name="settings_about_text">All recognition runs on the device without internet (ML Kit for English and numbers, Tesseract for Arabic).\nVersion %1$s</string>
+    <string name="settings_about_text">All recognition runs on the device without internet using Google ML Kit (English and digits).\nVersion %1$s</string>
 
     <string name="error_load_image">Could not load the image.</string>
-    <string name="error_engine_init">Could not initialize the OCR engine. Make sure the device has enough free space.</string>
     <string name="error_document_load">Could not open the document.</string>
 </resources>

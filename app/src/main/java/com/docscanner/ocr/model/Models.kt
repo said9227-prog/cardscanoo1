@@ -5,20 +5,18 @@ import com.docscanner.ocr.R
 import kotlin.math.roundToInt
 
 /**
- * Languages bundled with the app (tessdata_fast models inside assets/tessdata).
+ * Recognition language. The bundled ML Kit model reads Latin script and ASCII
+ * digits; old stored codes map to English so existing documents still open.
  */
 enum class OcrLanguage(val code: String, @StringRes val labelRes: Int) {
-    ARABIC("ara", R.string.lang_arabic),
-    ENGLISH("eng", R.string.lang_english),
-    ARABIC_ENGLISH("ara+eng", R.string.lang_arabic_english);
+    ENGLISH("eng", R.string.lang_english);
 
     companion object {
-        fun fromCode(code: String?): OcrLanguage =
-            values().firstOrNull { it.code == code } ?: ARABIC_ENGLISH
+        fun fromCode(code: String?): OcrLanguage = ENGLISH
     }
 }
 
-/** How a page image is prepared before it is handed to Tesseract. */
+/** How a page image is prepared before it is handed to the OCR engine. */
 enum class PreprocessMode(@StringRes val labelRes: Int) {
     AUTO(R.string.preprocess_auto),
     GRAYSCALE(R.string.preprocess_grayscale),

@@ -21,8 +21,7 @@ import kotlin.coroutines.resumeWithException
  *
  * The model ships inside the APK, so recognition works with no network. It reads
  * Latin script and ASCII digits very accurately, which is what card numbers, WiFi
- * passwords and English text need. It does not support Arabic script; those pages
- * are handled by [TesseractOcrEngine] through [HybridOcrEngine].
+ * passwords and English text need. Arabic script is not supported by this model.
  */
 class MlKitOcrEngine : OcrEngine {
 
@@ -37,8 +36,22 @@ class MlKitOcrEngine : OcrEngine {
         val lines = mutableListOf<OcrLine>()
         var index = 0
 
-        text.textBlocks.forEach { block ->
-            block.lines.forEach { line ->
+        // Keep the page order: blocks and lines are sorted top-to-bottom, then
+        // left-to-right, so the extracted text matches the image layout.
+        val blocks = text.textBlocks.sortedWith(
+            compareBy(
+                { it.boundingBox?.top ?: Int.MAX_VALUE },
+                { it.boundingBox?.left ?: Int.MAX_VALUE }
+            )
+        )
+        blocks.forEach { block ->
+            val orderedLines = block.lines.sortedWith(
+                compareBy(
+                    { it.boundingBox?.top ?: Int.MAX_VALUE },
+                    { it.boundingBox?.left ?: Int.MAX_VALUE }
+                )
+            )
+            orderedLines.forEach { line ->
                 val content = line.text.trim()
                 if (content.isNotEmpty()) {
                     val rect = line.boundingBox
@@ -46,8 +59,6 @@ class MlKitOcrEngine : OcrEngine {
                         index = index++,
                         text = content,
                         box = rect?.let { OcrBox(it.left, it.top, it.right, it.bottom) },
-                        // ML Kit does not expose a documented line confidence; 0 means
-                        // "unknown" and is never filtered out by the confidence setting.
                         confidence = 0f
                     )
                 }

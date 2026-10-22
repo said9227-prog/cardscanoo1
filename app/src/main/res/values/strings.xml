@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">ماسح المستندات</string>
-    <string name="app_tagline">تصوير الورق واستخراج النصوص والأرقام بالترتيب</string>
     <string name="app_version">2.0.0</string>
 
     <string name="shortcut_scan_short">تصوير مستند</string>
@@ -20,18 +19,14 @@
     <string name="home_recent">أحدث المستندات</string>
     <string name="home_no_documents">لا توجد مستندات بعد. ابدأ بتصوير صفحة أو اختيار صورة.</string>
     <string name="home_history">السجل (%1$d)</string>
-    <string name="home_language">لغة التعرف</string>
     <string name="home_tips_title">نصائح لدقة أفضل</string>
     <string name="home_tip_1">صوّر الورقة على سطح مستوٍ وبإضاءة جيدة.</string>
     <string name="home_tip_2">اجعل الورقة كاملة داخل الإطار وتجنّب الظلال.</string>
     <string name="home_tip_3">ثبّت الهاتف أثناء التصوير لتجنّب الضبابية.</string>
-    <string name="home_tip_4">للنصوص العربية والإنجليزية معاً اختر «العربية + الإنجليزية».</string>
+    <string name="home_tip_4">يقرأ التطبيق النصوص الإنجليزية والأرقام اللاتينية بدقة عالية.</string>
 
-    <string name="lang_arabic">العربية</string>
     <string name="lang_english">الإنجليزية</string>
-    <string name="lang_arabic_english">العربية + الإنجليزية</string>
 
-    <string name="camera_take_photo">التقاط</string>
     <string name="camera_switch">تبديل الكاميرا</string>
     <string name="camera_flash">الفلاش</string>
     <string name="camera_multiple_hint">التقط عدة صفحات ثم اضغط «إنهاء». كل صفحة تُحفظ فوراً حتى لا يتأخر التطبيق.</string>
@@ -50,29 +45,17 @@
     <string name="processing_title">جارٍ استخراج النص…</string>
     <string name="processing_page">جارٍ معالجة الصفحة %1$d من %2$d</string>
 
-    <string name="result_lines">النصوص بترتيبها (%1$d)</string>
-    <string name="result_numbers">الأرقام بالترتيب (%1$d)</string>
-    <string name="result_numbers_empty">لم يتم العثور على أرقام في هذه الصفحة.</string>
     <string name="result_full_text">النص الكامل</string>
-    <string name="result_language">اللغة: %1$s</string>
     <string name="result_overlay">إظهار مواضع النص على الصورة</string>
-    <string name="result_numbers_normalized">الرقم بالأرقام اللاتينية: %1$s</string>
-    <string name="result_copy_latin">نسخ باللاتينية</string>
-    <string name="result_tab_lines">النصوص</string>
-    <string name="result_tab_numbers">الأرقام</string>
-    <string name="result_tab_text">النص الكامل</string>
     <string name="result_doc_stats">%1$d صفحة · %2$d سطر · %3$d رقم</string>
+    <string name="result_text_stats">%1$d سطر · %2$d رقم</string>
     <string name="result_title_hint">عنوان المستند</string>
     <string name="result_page_empty">لا يوجد نص في هذه الصفحة بعد.</string>
-    <string name="result_confidence">الثقة: %1$d%%</string>
-    <string name="result_edit_hint">يمكنك تعديل النص مباشرة قبل النسخ أو المشاركة أو التصدير.</string>
+    <string name="result_number_hint">اضغط على أي رقم لنسخه مباشرة.</string>
+    <string name="result_edit_hint">يمكنك تعديل النص قبل نسخه أو مشاركته.</string>
 
     <string name="action_copy">نسخ</string>
     <string name="action_copy_all">نسخ كل النص</string>
-    <string name="action_copy_numbers">نسخ كل الأرقام</string>
-    <string name="action_copy_number">نسخ الرقم</string>
-    <string name="action_copy_line">نسخ هذا السطر</string>
-    <string name="action_copy_page">نسخ نص الصفحة</string>
     <string name="action_export_pdf">تصدير PDF</string>
     <string name="action_export_txt">تصدير TXT</string>
     <string name="action_share">مشاركة النص</string>
@@ -95,6 +78,8 @@
     <string name="action_select">تحديد</string>
     <string name="action_select_all">تحديد الكل</string>
     <string name="action_clear">مسح النص</string>
+    <string name="action_edit_text">تحرير النص</string>
+    <string name="action_done">تم</string>
     <string name="action_clear_selection">إلغاء التحديد</string>
     <string name="action_cancel_processing">إيقاف المعالجة</string>
     <string name="action_load_more">عرض المزيد</string>
@@ -141,23 +126,17 @@
     <string name="preprocess_grayscale">تدرج رمادي</string>
     <string name="preprocess_binarized">أسود وأبيض (دقة أعلى)</string>
     <string name="preprocess_color">ملون</string>
-    <string name="settings_min_confidence">أدنى ثقة للأسطر: %1$d%%</string>
-    <string name="settings_min_confidence_hint">تُستبعد الأسطر التي تقل ثقتها عن هذا الحد. القيمة 0 تعرض كل الأسطر.</string>
     <string name="settings_straighten">تصحيح ميل الصفحة تلقائياً</string>
     <string name="settings_straighten_hint">تدوير الصورة قبل التعرف لتصبح الأسطر أفقية.</string>
-    <string name="settings_language">لغة التعرف الافتراضية</string>
     <string name="settings_section_display">العرض</string>
     <string name="settings_theme">المظهر</string>
     <string name="theme_system">حسب النظام</string>
     <string name="theme_light">فاتح</string>
     <string name="theme_dark">داكن</string>
     <string name="settings_boxes">إظهار مواضع النص افتراضياً</string>
-    <string name="settings_colorful_cards">بطاقات نصوص مميزة بالألوان</string>
-    <string name="settings_colorful_cards_hint">تمييز كل سطر بشريط ولون ودرجة ثقة خاصة.</string>
     <string name="settings_about_title">عن التطبيق</string>
-    <string name="settings_about_text">يعمل التعرف على النصوص بالكامل داخل الجهاز دون إنترنت (‏ML Kit للإنجليزية والأرقام، وTesseract للعربية).\nالإصدار %1$s</string>
+    <string name="settings_about_text">يعمل التعرف على النصوص بالكامل داخل الجهاز دون إنترنت باستخدام Google ML Kit (الإنجليزية والأرقام).\nالإصدار %1$s</string>
 
     <string name="error_load_image">تعذر تحميل الصورة.</string>
-    <string name="error_engine_init">تعذر تهيئة محرك التعرف على النصوص. تأكد من توفر مساحة كافية في الجهاز.</string>
     <string name="error_document_load">تعذر فتح المستند.</string>
 </resources>

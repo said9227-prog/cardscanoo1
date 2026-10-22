@@ -19,42 +19,28 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.docscanner.ocr.R
 import com.docscanner.ocr.data.AppSettings
-import com.docscanner.ocr.model.OcrLanguage
 import com.docscanner.ocr.model.PreprocessMode
 import com.docscanner.ocr.model.ThemeMode
 import com.docscanner.ocr.ui.components.ChoiceChip
-import kotlin.math.roundToInt
 
 @Composable
 fun SettingsScreen(
     settings: AppSettings,
     onThemeMode: (ThemeMode) -> Unit,
-    onLanguage: (OcrLanguage) -> Unit,
     onPreprocessMode: (PreprocessMode) -> Unit,
-    onMinConfidence: (Int) -> Unit,
     onAutoStraighten: (Boolean) -> Unit,
     onShowBoxes: (Boolean) -> Unit,
-    onColorfulCards: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var confidence by remember(settings.minConfidence) {
-        mutableStateOf(settings.minConfidence.toFloat())
-    }
-
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -77,40 +63,12 @@ fun SettingsScreen(
                     )
                 }
             }
-            Text(
-                text = stringResource(R.string.settings_min_confidence, confidence.roundToInt()),
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Slider(
-                value = confidence,
-                onValueChange = { confidence = it },
-                onValueChangeFinished = { onMinConfidence(confidence.roundToInt()) },
-                valueRange = 0f..90f
-            )
-            Text(
-                text = stringResource(R.string.settings_min_confidence_hint),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
             SwitchRow(
                 title = stringResource(R.string.settings_straighten),
                 subtitle = stringResource(R.string.settings_straighten_hint),
                 checked = settings.autoStraighten,
                 onCheckedChange = onAutoStraighten
             )
-        }
-
-        SettingsCard {
-            SectionTitle(text = stringResource(R.string.settings_language))
-            ChipRow {
-                OcrLanguage.values().forEach { option ->
-                    ChoiceChip(
-                        label = stringResource(option.labelRes),
-                        selected = option.code == settings.languageCode,
-                        onClick = { onLanguage(option) }
-                    )
-                }
-            }
         }
 
         SettingsCard {
@@ -133,12 +91,6 @@ fun SettingsScreen(
                 subtitle = null,
                 checked = settings.showBoxes,
                 onCheckedChange = onShowBoxes
-            )
-            SwitchRow(
-                title = stringResource(R.string.settings_colorful_cards),
-                subtitle = stringResource(R.string.settings_colorful_cards_hint),
-                checked = settings.colorfulCards,
-                onCheckedChange = onColorfulCards
             )
         }
 

@@ -456,7 +456,7 @@ class DocumentRepository(context: Context) {
             pages = listOf(page),
             createdAt = record.createdAt,
             updatedAt = record.createdAt,
-            languageCode = OcrLanguage.ARABIC_ENGLISH.code
+            languageCode = OcrLanguage.ENGLISH.code
         )
         saveDocument(document)
     }
@@ -510,7 +510,7 @@ class DocumentRepository(context: Context) {
             pages = pages,
             createdAt = json.optLong("createdAt"),
             updatedAt = json.optLong("updatedAt"),
-            languageCode = json.optString("language", OcrLanguage.ARABIC_ENGLISH.code)
+            languageCode = json.optString("language", OcrLanguage.ENGLISH.code)
         )
     }
 
@@ -588,7 +588,7 @@ class DocumentRepository(context: Context) {
                     preview = json.optString("preview"),
                     pageCount = json.optInt("pageCount", 1),
                     numbersCount = json.optInt("numbersCount", 0),
-                    languageCode = json.optString("language", OcrLanguage.ARABIC_ENGLISH.code),
+                    languageCode = json.optString("language", OcrLanguage.ENGLISH.code),
                     thumbPath = json.optString("thumbPath"),
                     createdAt = json.optLong("createdAt"),
                     updatedAt = json.optLong("updatedAt")

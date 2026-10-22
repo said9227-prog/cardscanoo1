@@ -18,8 +18,7 @@ import com.docscanner.ocr.model.PreprocessMode
 import com.docscanner.ocr.model.ScanDocument
 import com.docscanner.ocr.model.ScanPage
 import com.docscanner.ocr.model.ThemeMode
-import com.docscanner.ocr.ocr.HybridOcrEngine
-import com.docscanner.ocr.ocr.NumberExtractor
+import com.docscanner.ocr.ocr.MlKitOcrEngine
 import com.docscanner.ocr.ocr.OcrEngine
 import com.docscanner.ocr.util.ImageUtils
 import kotlinx.coroutines.Dispatchers
@@ -52,7 +51,7 @@ sealed interface UiEvent {
 
 data class UiState(
     val screen: Screen = Screen.Home,
-    val language: OcrLanguage = OcrLanguage.ARABIC_ENGLISH,
+    val language: OcrLanguage = OcrLanguage.ENGLISH,
     val settings: com.docscanner.ocr.data.AppSettings = com.docscanner.ocr.data.AppSettings(),
     val summaries: List<DocumentSummary> = emptyList(),
     val document: ScanDocument? = null,
@@ -71,13 +70,13 @@ data class UiState(
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val app = application
-    private val engine: OcrEngine = HybridOcrEngine(application)
+    private val engine: OcrEngine = MlKitOcrEngine()
     private val repository = DocumentRepository(application)
     private val settingsRepository = SettingsRepository.get(application)
 
     private val initialSettings = settingsRepository.settings.value
     private val _state = MutableStateFlow(
-        UiState(settings = initialSettings, language = initialSettings.language)
+        UiState(settings = initialSettings, language = OcrLanguage.ENGLISH)
     )
     val state: StateFlow<UiState> = _state.asStateFlow()
 
@@ -91,7 +90,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     init {
         viewModelScope.launch {
             settingsRepository.settings.collect { settings ->
-                _state.update { it.copy(settings = settings, language = settings.language) }
+                _state.update { it.copy(settings = settings, language = OcrLanguage.ENGLISH) }
             }
         }
         viewModelScope.launch(Dispatchers.IO) {
@@ -145,19 +144,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     // --------------------------------------------------------------- settings
 
-    fun selectLanguage(language: OcrLanguage) = settingsRepository.setLanguage(language)
-
     fun setThemeMode(mode: ThemeMode) = settingsRepository.setThemeMode(mode)
 
     fun setPreprocessMode(mode: PreprocessMode) = settingsRepository.setPreprocessMode(mode)
 
-    fun setMinConfidence(value: Int) = settingsRepository.setMinConfidence(value)
-
     fun setAutoStraighten(enabled: Boolean) = settingsRepository.setAutoStraighten(enabled)
 
     fun setShowBoxes(enabled: Boolean) = settingsRepository.setShowBoxes(enabled)
-
-    fun setColorfulCards(enabled: Boolean) = settingsRepository.setColorfulCards(enabled)
 
     // ---------------------------------------------------------------- capture
 
@@ -494,12 +487,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             ImageUtils.MAX_DECODE_DIMENSION
         ) ?: return@withContext null
         // ML Kit works best on colour/grayscale; aggressive thresholding can erase
-        // thin digits. Tesseract still gets the user's chosen mode.
-        val ocrMode = if (language == OcrLanguage.ENGLISH && mode == PreprocessMode.AUTO) {
-            PreprocessMode.GRAYSCALE
-        } else {
-            mode
-        }
+        // thin digits, so AUTO maps to GRAYSCALE.
+        val ocrMode = if (mode == PreprocessMode.AUTO) PreprocessMode.GRAYSCALE else mode
         val prepared = runCatching { ImageUtils.prepareForOcr(source, ocrMode) }.getOrNull()
         if (prepared == null) {
             if (!source.isRecycled) source.recycle()
@@ -512,16 +501,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             } else {
                 val scaleX = source.width.toFloat() / prepared.width.toFloat()
                 val scaleY = source.height.toFloat() / prepared.height.toFloat()
-                val minConfidence = _state.value.settings.minConfidence
-                val lines = result.lines
-                    .filter { line ->
-                        minConfidence <= 0 || line.confidence <= 0f ||
-                            line.confidence >= minConfidence ||
-                            NumberExtractor.NUMBER_REGEX.containsMatchIn(line.text)
-                    }
-                    .mapIndexed { index, line ->
-                        line.copy(index = index, box = line.box?.scaled(scaleX, scaleY))
-                    }
+                val lines = result.lines.mapIndexed { index, line ->
+                    line.copy(index = index, box = line.box?.scaled(scaleX, scaleY))
+                }
                 OcrResult(
                     fullText = lines.joinToString("\n") { it.text },
                     lines = lines,

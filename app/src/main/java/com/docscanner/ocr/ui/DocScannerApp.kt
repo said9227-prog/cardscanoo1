@@ -151,9 +151,7 @@ fun DocScannerApp(viewModel: MainViewModel) {
         ) {
             when (state.screen) {
                 Screen.Home -> HomeScreen(
-                    language = state.language,
                     summaries = state.summaries,
-                    onLanguageSelected = viewModel::selectLanguage,
                     onOpenCamera = viewModel::startCapture,
                     onPickImages = viewModel::importImages,
                     onOpenHistory = viewModel::openHistory,
@@ -189,7 +187,6 @@ fun DocScannerApp(viewModel: MainViewModel) {
                             processedCount = state.processedCount,
                             totalToProcess = state.totalToProcess,
                             showBoxes = state.settings.showBoxes,
-                            colorfulCards = state.settings.colorfulCards,
                             onToggleBoxes = viewModel::setShowBoxes,
                             onSelectPage = viewModel::selectPage,
                             onRename = viewModel::renameDocument,
@@ -215,12 +212,9 @@ fun DocScannerApp(viewModel: MainViewModel) {
                 Screen.Settings -> SettingsScreen(
                     settings = state.settings,
                     onThemeMode = viewModel::setThemeMode,
-                    onLanguage = viewModel::selectLanguage,
                     onPreprocessMode = viewModel::setPreprocessMode,
-                    onMinConfidence = viewModel::setMinConfidence,
                     onAutoStraighten = viewModel::setAutoStraighten,
-                    onShowBoxes = viewModel::setShowBoxes,
-                    onColorfulCards = viewModel::setColorfulCards
+                    onShowBoxes = viewModel::setShowBoxes
                 )
             }
 

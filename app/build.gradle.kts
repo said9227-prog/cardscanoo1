@@ -45,11 +45,6 @@ android {
         kotlinCompilerExtensionVersion = "1.5.14"
     }
 
-    androidResources {
-        // Tesseract needs to read the models with regular file IO.
-        noCompress.add("traineddata")
-    }
-
     packaging {
         resources {
             excludes += setOf("/META-INF/{AL2.0,LGPL2.1}", "META-INF/DEPENDENCIES")
@@ -76,11 +71,7 @@ dependencies {
     implementation("androidx.camera:camera-lifecycle:1.3.4")
     implementation("androidx.camera:camera-view:1.3.4")
 
-    // On-device OCR: Tesseract stays for Arabic (ML Kit has no offline Arabic model).
-    implementation("cz.adaptech.tesseract4android:tesseract4android:4.9.0")
-
     // Google ML Kit text recognition v2 (Latin/digits). Bundled model = fully offline.
-    // Used for English and as a high-accuracy number pass in the hybrid engine.
     implementation("com.google.mlkit:text-recognition:16.0.1")
 
     debugImplementation("androidx.compose.ui:ui-tooling")
