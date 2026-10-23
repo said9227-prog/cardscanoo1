@@ -20,6 +20,17 @@
     <string name="home_no_documents">No documents yet. Start by capturing a page or picking an image.</string>
     <string name="home_numbers_title">Extracted numbers</string>
     <string name="home_numbers_empty">No numbers in this document.</string>
+    <string name="home_search_hint">Search lens: type a number found in the images…</string>
+    <string name="home_search_clear">Clear search</string>
+    <string name="home_search_results">Search results (%1$d)</string>
+    <string name="home_search_empty">No images contain this number.</string>
+    <string name="home_search_matches">Matching numbers</string>
+    <string name="home_search_hit_meta">Page %1$d · %2$d matches</string>
+    <string name="home_copy_success">Number copied successfully · Copies: %1$d</string>
+    <string name="home_copy_count">Copied %1$d times</string>
+    <string name="home_copied_star">Copied %1$d times</string>
+    <string name="home_show_all_numbers">Show all numbers (%1$d)</string>
+    <string name="home_show_less">Show less</string>
     <string name="home_history">History (%1$d)</string>
     <string name="home_tips_title">Tips for better accuracy</string>
     <string name="home_tip_1">Photograph the paper on a flat surface with good lighting.</string>
@@ -107,7 +118,7 @@
     <string name="history_empty_preview">No text</string>
     <string name="history_count">%1$d documents</string>
     <string name="history_selected">Selected: %1$d</string>
-    <string name="history_search_hint">Search history</string>
+    <string name="history_search_hint">Search name, text, or number</string>
     <string name="history_sort">Sort</string>
     <string name="history_no_results">No matching results.</string>
 

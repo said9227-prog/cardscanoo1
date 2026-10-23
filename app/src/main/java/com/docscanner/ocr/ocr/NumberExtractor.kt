@@ -40,6 +40,21 @@ object NumberExtractor {
         return numbers
     }
 
+    /** True when [query] appears in [number], ignoring separators and Arabic digits. */
+    fun matches(number: String, query: String): Boolean =
+        matchesNormalized(number, normalizeDigits(query))
+
+    /** Same as [matches] when the query is already normalised. */
+    fun matchesNormalized(number: String, normalizedQuery: String): Boolean {
+        val query = normalizedQuery.trim()
+        if (query.isEmpty()) return false
+        val normalized = normalizeDigits(number)
+        if (normalized.contains(query)) return true
+        val queryDigits = query.filter { it.isDigit() }
+        return queryDigits.isNotEmpty() &&
+            normalized.filter { it.isDigit() }.contains(queryDigits)
+    }
+
     /** Converts Arabic-Indic digits and separators to their Latin equivalents. */
     fun normalizeDigits(text: String): String {
         val builder = StringBuilder(text.length)

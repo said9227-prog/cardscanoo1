@@ -17,7 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Check
@@ -53,6 +53,7 @@ import androidx.compose.ui.unit.dp
 import com.docscanner.ocr.R
 import com.docscanner.ocr.model.DocumentSummary
 import com.docscanner.ocr.model.SortOrder
+import com.docscanner.ocr.ocr.NumberExtractor
 import com.docscanner.ocr.ui.components.EmptyState
 import com.docscanner.ocr.ui.components.rememberThumbnail
 import com.docscanner.ocr.ui.theme.cardAccent
@@ -76,12 +77,17 @@ fun HistoryScreen(
     var confirmDeleteIds by remember { mutableStateOf<List<String>?>(null) }
 
     val filtered = remember(summaries, query, sortOrder) {
+        val normalizedQuery = NumberExtractor.normalizeDigits(query).trim()
+        val queryHasDigits = normalizedQuery.any { it.isDigit() }
         val base = if (query.isBlank()) {
             summaries
         } else {
             summaries.filter { summary ->
                 summary.title.contains(query, ignoreCase = true) ||
-                    summary.preview.contains(query, ignoreCase = true)
+                    summary.preview.contains(query, ignoreCase = true) ||
+                    (queryHasDigits && summary.numbers.any {
+                        NumberExtractor.matchesNormalized(it, normalizedQuery)
+                    })
             }
         }
         when (sortOrder) {
@@ -210,11 +216,10 @@ fun HistoryScreen(
                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 88.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                items(visible, key = { it.id }) { summary ->
-                    val index = filtered.indexOfFirst { it.id == summary.id }
+                itemsIndexed(visible, key = { _, summary -> summary.id }) { index, summary ->
                     HistoryCard(
                         summary = summary,
-                        accentIndex = index.coerceAtLeast(0),
+                        accentIndex = index,
                         selectionMode = selectionMode,
                         selected = summary.id in selected,
                         onClick = {

@@ -6,6 +6,7 @@ import android.net.Uri
 import androidx.annotation.StringRes
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.docscanner.ocr.data.CopyStatsRepository
 import com.docscanner.ocr.data.DocumentRepository
 import com.docscanner.ocr.data.SettingsRepository
 import com.docscanner.ocr.data.ThumbnailLoader
@@ -55,6 +56,7 @@ data class UiState(
     val language: OcrLanguage = OcrLanguage.ENGLISH,
     val settings: com.docscanner.ocr.data.AppSettings = com.docscanner.ocr.data.AppSettings(),
     val summaries: List<DocumentSummary> = emptyList(),
+    val copyCounts: Map<String, Int> = emptyMap(),
     val document: ScanDocument? = null,
     val pageIndex: Int = 0,
     val pendingPages: List<PendingPage> = emptyList(),
@@ -74,6 +76,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val engine: OcrEngine = MlKitOcrEngine()
     private val repository = DocumentRepository(application)
     private val settingsRepository = SettingsRepository.get(application)
+    private val copyStatsRepository = CopyStatsRepository.get(application)
 
     private val initialSettings = settingsRepository.settings.value
     private val _state = MutableStateFlow(
@@ -94,10 +97,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 _state.update { it.copy(settings = settings, language = OcrLanguage.ENGLISH) }
             }
         }
+        viewModelScope.launch {
+            copyStatsRepository.counts.collect { counts ->
+                _state.update { it.copy(copyCounts = counts) }
+            }
+        }
         viewModelScope.launch(Dispatchers.IO) {
+            // Show the saved list immediately; orphan cleanup can be slow with
+            // thousands of documents, so it runs afterwards.
+            val initial = repository.loadSummaries()
+            _state.update { it.copy(summaries = initial) }
             repository.cleanupOrphans()
-            val summaries = repository.loadSummaries()
-            _state.update { it.copy(summaries = summaries) }
+            val refreshed = repository.loadSummaries()
+            if (refreshed != initial) {
+                _state.update { it.copy(summaries = refreshed) }
+            }
         }
     }
 
@@ -116,7 +130,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _state.update { it.copy(screen = Screen.Settings) }
     }
 
-    fun openDocument(documentId: String) {
+    fun openDocument(documentId: String) = openDocumentAt(documentId, 0)
+
+    fun openDocumentAt(documentId: String, requestedPage: Int) {
         viewModelScope.launch {
             _state.update { it.copy(isBusy = true) }
             val document = withContext(Dispatchers.IO) { repository.loadDocument(documentId) }
@@ -127,7 +143,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     current.copy(
                         isBusy = false,
                         document = document,
-                        pageIndex = 0,
+                        pageIndex = requestedPage.coerceIn(
+                            0,
+                            document.pages.lastIndex.coerceAtLeast(0)
+                        ),
                         screen = Screen.Result
                     )
                 }
@@ -152,6 +171,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun setAutoStraighten(enabled: Boolean) = settingsRepository.setAutoStraighten(enabled)
 
     fun setShowBoxes(enabled: Boolean) = settingsRepository.setShowBoxes(enabled)
+
+    fun copyNumber(documentId: String) {
+        val count = copyStatsRepository.recordCopy(documentId)
+        sendMessage(R.string.home_copy_success, count)
+    }
 
     // ---------------------------------------------------------------- capture
 

@@ -36,7 +36,7 @@ enum class ThemeMode(@StringRes val labelRes: Int) {
 
     companion object {
         fun fromName(name: String?): ThemeMode =
-            values().firstOrNull { it.name == name } ?: SYSTEM
+            values().firstOrNull { it.name == name } ?: LIGHT
     }
 }
 
@@ -123,6 +123,12 @@ data class ScanDocument(
     }
 }
 
+/** Per-page searchable data kept in the lightweight index. */
+data class DocumentPageSummary(
+    val thumbPath: String,
+    val numbers: List<String>
+)
+
 /** Lightweight row shown in the history list (read from index.json). */
 data class DocumentSummary(
     val id: String,
@@ -131,6 +137,7 @@ data class DocumentSummary(
     val pageCount: Int,
     val numbersCount: Int,
     val numbers: List<String>,
+    val pages: List<DocumentPageSummary> = emptyList(),
     val languageCode: String,
     val thumbPath: String,
     val createdAt: Long,

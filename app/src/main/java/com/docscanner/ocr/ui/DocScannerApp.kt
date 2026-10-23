@@ -152,11 +152,13 @@ fun DocScannerApp(viewModel: MainViewModel) {
             when (state.screen) {
                 Screen.Home -> HomeScreen(
                     summaries = state.summaries,
+                    copyCounts = state.copyCounts,
+                    onNumberCopied = viewModel::copyNumber,
                     onOpenCamera = viewModel::startCapture,
                     onPickImages = viewModel::importImages,
                     onOpenHistory = viewModel::openHistory,
                     onOpenSettings = viewModel::openSettings,
-                    onOpenDocument = viewModel::openDocument
+                    onOpenDocument = viewModel::openDocumentAt
                 )
 
                 Screen.Camera -> CameraScreen(

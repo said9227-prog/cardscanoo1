@@ -1,9 +1,9 @@
 تقرير التعديلات — ماسح المستندات
 التاريخ: 2026-10-22
-الحالة: تم الدفع إلى main ونجح بناء APK عبر GitHub Actions.
-التشغيل الناجح: https://github.com/said9227-prog/cardscanoo1/actions/runs/39815889794
-حجم APK: 59MB (ملف app-debug.apk)، وحجم الـ artifact المضغوط 36.6MB (36,597,677 بايت).
-ملاحظة: التشغيل السابق 39808364169 نجح أيضاً قبل تعديل الصفحة الرئيسية.
+الحالة: قيد الدفع إلى main وبناء APK عبر GitHub Actions (دفعة البحث والنسخ والأداء).
+آخر تشغيل ناجح: https://github.com/said9227-prog/cardscanoo1/actions/runs/39815889794
+حجم APK: 59MB (ملف app-debug.apk)، وحجم الـ artifact المضغوط 36.6MB.
+ملاحظة: سيُحدَّث رقم التشغيل الجديد بعد نجاح البناء.
 
 ======================================================================
 1) القرار المعماري
@@ -103,7 +103,7 @@
 4) الفحوصات المنفذة
 ======================================================================
 - XML: values/strings.xml و values-en/strings.xml صالحان.
-- تطابق المفاتيح: 126/126، لا فروق.
+- تطابق المفاتيح: 137/137، لا فروق.
 - كل R.string المستخدمة في Kotlin/XML موجودة، ولا مفاتيح غير مستخدمة.
 - لا مراجع متبقية إلى Tesseract/Hybrid/minConfidence/colorfulCards/ARABIC_ENGLISH.
 - توازن الأقواس: 0 فرق في جميع ملفات Kotlin.
@@ -112,8 +112,65 @@
 ======================================================================
 5) النتيجة
 ======================================================================
-- الكود على main في commit 4eb4d4a (دفعة الصفحة الرئيسية) بعد نجاح البناء.
+- الكود على main في commit جديد (دفعة البحث والنسخ والأداء) بعد نجاح البناء.
 - APK متاح كـ artifact باسم DocScannerOCR-debug-apk.
 - التطبيق الآن: ML Kit فقط، إنجليزي/أرقام لاتينية، صفحة رئيسية بزر كاميرا كبير،
-  أحدث المستندات بصورة + أرقام فقط قابلة للنسخ، ونص كامل عند فتح المستند.
+  أحدث المستندات بصورة + أرقام فقط قابلة للنسخ، وعدّاد نسخ ونجمة، وعدسة بحث بالرقم.
 - قيد معروف: لا يدعم النص العربي بعد إزالة Tesseract (قرار مقصود).
+
+
+======================================================================
+6) تحديث البحث والنسخ والأداء (2026-10-23)
+======================================================================
+- الوضع النهاري أصبح الافتراضي:
+  * AppSettings.themeMode = LIGHT.
+  * ThemeMode.fromName(null) يرجع LIGHT (مع احترام أي اختيار محفوظ للمستخدم).
+
+- عدّاد النسخ والنجمة:
+  * data/CopyStatsRepository.kt جديد: يحفظ عدد مرات النسخ لكل مستند في
+    SharedPreferences كـ JSON وي exposes StateFlow<Map<String,Int>>.
+  * MainViewModel: copyCounts داخل UiState، ودالة copyNumber ترسل رسالة
+    «تم نسخ الرقم بنجاح · عدد مرات النسخ: N».
+  * HomeScreen: نجمة ⭐ مع العدد على صورة المستند بعد أول نسخ، وعدّاد بجانب
+    عنوان الأرقام. تبقى بعد إعادة تشغيل التطبيق.
+
+- عدسة البحث بالرقم:
+  * شريط بحث أعلى الصفحة الرئيسية يقبل رقماً أو جزءاً منه (مثل 128 أو 1283773)
+    ويبحث فوراً في أرقام كل الصفحات.
+  * البحث يتجاهل المسافات والفواصل ويحوّل الأرقام العربية/الفارسية إلى لاتينية.
+  * النتائج LazyColumn تعرض صورة الصفحة المطابقة نفسها (وليس بالضرورة الصفحة الأولى)
+    مع الأرقام المطابقة فقط، والضغط عليها يفتح المستند على تلك الصفحة.
+
+- تسريع المكتبات الكبيرة وتقليل الذاكرة:
+  * index.json صار يحمل أرقام وصورة مصغّرة لكل صفحة (DocumentPageSummary)،
+    مع إعادة بناء تلقائية مرة واحدة للفهرس القديم.
+  * MainViewModel يعرض قائمة المستندات المحفوظة فوراً ثم ينظف الملفات اليتيمة
+    في الخلفية بدل حجب الواجهة.
+  * rebuildIndex وcleanupOrphans يقرآن مستنداً واحداً في كل مرة بدل تحميل كل
+    المستندات الكاملة في الذاكرة دفعة واحدة.
+  * OCR يكتب فهرس البحث مرة واحدة في نهاية المعالجة بدل إعادة قراءته/كتابته لكل صفحة.
+  * HistoryScreen يستخدم itemsIndexed (بدل indexOfFirst داخل كل عنصر) ويبحث أيضاً
+    داخل الأرقام، مع صور مصغّرة LRU محدودة الذاكرة.
+  * منتقي الصور يسمح حتى 100 صورة، والمعالجة ما تزال صفحة بصفحة مع تحديث التقدم.
+  * حفظ الصور يلتقط OutOfMemoryError ويعيد false بدل إنهاء التطبيق.
+  * أرقام كل بطاقة تُعرض أول 8 مع زر «عرض كل الأرقام» لتقليل عناصر Compose.
+
+- ملفات هذا التحديث:
+  * app/src/main/java/com/docscanner/ocr/data/CopyStatsRepository.kt (جديد)
+  * app/src/main/java/com/docscanner/ocr/data/DocumentRepository.kt
+  * app/src/main/java/com/docscanner/ocr/data/SettingsRepository.kt
+  * app/src/main/java/com/docscanner/ocr/model/Models.kt
+  * app/src/main/java/com/docscanner/ocr/MainViewModel.kt
+  * app/src/main/java/com/docscanner/ocr/ocr/NumberExtractor.kt
+  * app/src/main/java/com/docscanner/ocr/ui/HomeScreen.kt
+  * app/src/main/java/com/docscanner/ocr/ui/HistoryScreen.kt
+  * app/src/main/java/com/docscanner/ocr/ui/DocScannerApp.kt
+  * app/src/main/java/com/docscanner/ocr/ui/ResultScreen.kt (حد اختيار الصور)
+  * app/src/main/java/com/docscanner/ocr/util/ImageUtils.kt
+  * app/src/main/res/values/strings.xml و values-en/strings.xml (+11 مفاتيح)
+  * README.md و CHANGES_REPORT.txt
+
+- الفحوصات:
+  * XML صالح، 137 مفتاحاً متطابقاً في ar/en، لا مفاتيح ناقصة أو مكررة أو غير مستخدمة.
+  * لا مراجع R.string مفقودة، وفحص توازن الأقواس سليم.
+  * لا بناء محلي (لا JDK/Android SDK)؛ التحقق عبر GitHub Actions.

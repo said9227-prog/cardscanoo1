@@ -7,6 +7,7 @@ import android.graphics.RectF
 import android.graphics.pdf.PdfDocument
 import android.net.Uri
 import com.docscanner.ocr.R
+import com.docscanner.ocr.model.DocumentPageSummary
 import com.docscanner.ocr.model.DocumentSummary
 import com.docscanner.ocr.model.ExportFormat
 import com.docscanner.ocr.model.OcrBox
@@ -48,6 +49,9 @@ class DocumentRepository(context: Context) {
     private val trashDir = File(root, "trash").apply { mkdirs() }
     private val indexFile = File(root, "index.json")
     private val pendingRoot = File(appContext.cacheDir, "pending").apply { mkdirs() }
+
+    @Volatile
+    private var summaryCache: List<DocumentSummary>? = null
 
     // ---------------------------------------------------------------- pending
 
@@ -173,6 +177,10 @@ class DocumentRepository(context: Context) {
 
     fun saveDocument(document: ScanDocument) {
         writeAtomic(File(docsDir, "${document.id}.json"), documentToJson(document).toString())
+        updateIndexFor(document)
+    }
+
+    private fun updateIndexFor(document: ScanDocument) {
         val summaries = loadSummaries().filterNot { it.id == document.id } + toSummary(document)
         writeIndex(summaries.sortedByDescending { it.updatedAt })
     }
@@ -220,12 +228,18 @@ class DocumentRepository(context: Context) {
     // ----------------------------------------------------------------- history
 
     fun loadSummaries(): List<DocumentSummary> {
+        summaryCache?.let { return it }
         if (indexFile.exists()) {
             val parsed = runCatching { parseSummaries(indexFile.readText()) }.getOrNull()
-            // Older indexes did not store the numbers themselves. Rebuild once so
-            // the home screen can show them in document order.
-            val numbersMissing = parsed?.any { it.numbers.size != it.numbersCount } == true
-            if (parsed != null && !numbersMissing) return parsed
+            // Older indexes did not store the numbers themselves or their page
+            // thumbnails. Rebuild once so search can show the exact page image.
+            val needsRebuild = parsed?.any {
+                it.numbers.size != it.numbersCount || it.pages.size != it.pageCount
+            } == true
+            if (parsed != null && !needsRebuild) {
+                summaryCache = parsed
+                return parsed
+            }
         }
         return rebuildIndex()
     }
@@ -233,9 +247,12 @@ class DocumentRepository(context: Context) {
     private fun rebuildIndex(): List<DocumentSummary> {
         val summaries = docsDir.listFiles { file -> file.extension == "json" }
             .orEmpty()
-            .mapNotNull { file -> runCatching { parseDocument(file.readText()) }.getOrNull() }
-            .filter { it.id.isNotBlank() }
-            .map { toSummary(it) }
+            .mapNotNull { file ->
+                runCatching { parseDocument(file.readText()) }
+                    .getOrNull()
+                    ?.takeIf { it.id.isNotBlank() }
+                    ?.let { toSummary(it) }
+            }
             .sortedByDescending { it.updatedAt }
         writeIndex(summaries)
         return summaries
@@ -275,11 +292,10 @@ class DocumentRepository(context: Context) {
         runCatching { migrateLegacyIfNeeded() }
         runCatching { pendingRoot.listFiles()?.forEach { it.deleteRecursively() } }
         runCatching {
-            val documents = loadAllDocuments()
             val images = mutableSetOf<String>()
             val thumbs = mutableSetOf<String>()
-            documents.forEach { document ->
-                document.pages.forEach { page ->
+            docsDir.listFiles { file -> file.extension == "json" }.orEmpty().forEach { file ->
+                runCatching { parseDocument(file.readText()) }.getOrNull()?.pages?.forEach { page ->
                     images += File(page.imagePath).name
                     thumbs += File(page.thumbPath).name
                 }
@@ -304,11 +320,6 @@ class DocumentRepository(context: Context) {
         }
     }
 
-    private fun loadAllDocuments(): List<ScanDocument> =
-        docsDir.listFiles { file -> file.extension == "json" }
-            .orEmpty()
-            .mapNotNull { file -> runCatching { parseDocument(file.readText()) }.getOrNull() }
-            .filter { it.id.isNotBlank() }
 
     // ------------------------------------------------------------------ export
 
@@ -575,6 +586,15 @@ class DocumentRepository(context: Context) {
         put("pageCount", summary.pageCount)
         put("numbersCount", summary.numbersCount)
         put("numbers", JSONArray().apply { summary.numbers.forEach { put(it) } })
+        put("pages", JSONArray().apply {
+            summary.pages.forEach { page ->
+                put(
+                    JSONObject()
+                        .put("thumb", page.thumbPath)
+                        .put("numbers", JSONArray().apply { page.numbers.forEach { put(it) } })
+                )
+            }
+        })
         put("language", summary.languageCode)
         put("thumbPath", summary.thumbPath)
         put("createdAt", summary.createdAt)
@@ -596,6 +616,19 @@ class DocumentRepository(context: Context) {
                         (0 until numbersArray.length())
                             .map { numbersArray.optString(it) }
                             .filter { it.isNotBlank() }
+                    }.orEmpty(),
+                    pages = json.optJSONArray("pages")?.let { pagesArray ->
+                        (0 until pagesArray.length()).mapNotNull { pageIndex ->
+                            val pageJson = pagesArray.optJSONObject(pageIndex) ?: return@mapNotNull null
+                            DocumentPageSummary(
+                                thumbPath = pageJson.optString("thumb"),
+                                numbers = pageJson.optJSONArray("numbers")?.let { numbersArray ->
+                                    (0 until numbersArray.length())
+                                        .map { numbersArray.optString(it) }
+                                        .filter { it.isNotBlank() }
+                                }.orEmpty()
+                            )
+                        }
                     }.orEmpty(),
                     languageCode = json.optString("language", OcrLanguage.ENGLISH.code),
                     thumbPath = json.optString("thumbPath"),
@@ -620,6 +653,12 @@ class DocumentRepository(context: Context) {
             pageCount = document.pages.size,
             numbersCount = document.numbers.size,
             numbers = document.numbers.map { it.value },
+            pages = document.pages.map { page ->
+                DocumentPageSummary(
+                    thumbPath = page.thumbPath,
+                    numbers = page.numbers.map { it.value }
+                )
+            },
             languageCode = document.languageCode,
             thumbPath = document.pages.firstOrNull()?.thumbPath.orEmpty(),
             createdAt = document.createdAt,
@@ -680,6 +719,7 @@ class DocumentRepository(context: Context) {
         val array = JSONArray()
         summaries.forEach { array.put(summaryToJson(it)) }
         writeAtomic(indexFile, array.toString())
+        summaryCache = summaries
     }
 
     private fun writeAtomic(file: File, content: String) {

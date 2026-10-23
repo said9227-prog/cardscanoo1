@@ -150,7 +150,7 @@ fun ResultScreen(
         contract = ActivityResultContracts.CreateDocument("text/plain")
     ) { uri -> if (uri != null) onExport(uri, ExportFormat.TXT) }
     val pickImages = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickMultipleVisualMedia(30)
+        contract = ActivityResultContracts.PickMultipleVisualMedia(100)
     ) { uris -> if (uris.isNotEmpty()) onAddImages(uris) }
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {

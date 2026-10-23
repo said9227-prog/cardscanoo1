@@ -263,16 +263,18 @@ object ImageUtils {
             }
         }
         return try {
-            if (!writeJpeg(page, imageFile, 90)) {
-                false
-            } else {
-                val thumb = createThumbnail(page)
-                try {
-                    writeJpeg(thumb, thumbFile, 78)
-                } finally {
-                    if (thumb !== page) thumb.recycle()
+            runCatching {
+                if (!writeJpeg(page, imageFile, 90)) {
+                    false
+                } else {
+                    val thumb = createThumbnail(page)
+                    try {
+                        writeJpeg(thumb, thumbFile, 78)
+                    } finally {
+                        if (thumb !== page) thumb.recycle()
+                    }
                 }
-            }
+            }.getOrDefault(false)
         } finally {
             straightened?.let { if (!it.isRecycled) it.recycle() }
         }
@@ -286,7 +288,9 @@ object ImageUtils {
             null
         } ?: return false
         return try {
-            val rotated = rotateBitmap(decoded, degrees)
+            val rotated = runCatching { rotateBitmap(decoded, degrees) }
+                .getOrNull()
+                ?: return false
             try {
                 val target = File(path)
                 val temp = File(target.parentFile, target.name + ".tmp")
@@ -312,12 +316,14 @@ object ImageUtils {
     fun createThumbnailFile(sourcePath: String, thumbPath: String): Boolean {
         val bitmap = decodeFile(sourcePath, 720) ?: return false
         return try {
-            val thumb = createThumbnail(bitmap)
-            try {
-                writeJpeg(thumb, File(thumbPath), 78)
-            } finally {
-                if (thumb !== bitmap) thumb.recycle()
-            }
+            runCatching {
+                val thumb = createThumbnail(bitmap)
+                try {
+                    writeJpeg(thumb, File(thumbPath), 78)
+                } finally {
+                    if (thumb !== bitmap) thumb.recycle()
+                }
+            }.getOrDefault(false)
         } finally {
             if (!bitmap.isRecycled) bitmap.recycle()
         }

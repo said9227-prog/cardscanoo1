@@ -20,6 +20,17 @@
     <string name="home_no_documents">لا توجد مستندات بعد. ابدأ بتصوير صفحة أو اختيار صورة.</string>
     <string name="home_numbers_title">الأرقام المستخرجة</string>
     <string name="home_numbers_empty">لا توجد أرقام في هذا المستند.</string>
+    <string name="home_search_hint">عدسة البحث: اكتب رقمًا موجودًا في الصور…</string>
+    <string name="home_search_clear">مسح البحث</string>
+    <string name="home_search_results">نتائج البحث (%1$d)</string>
+    <string name="home_search_empty">لا توجد صور تحتوي على هذا الرقم.</string>
+    <string name="home_search_matches">أرقام مطابقة</string>
+    <string name="home_search_hit_meta">صفحة %1$d · %2$d نتيجة</string>
+    <string name="home_copy_success">تم نسخ الرقم بنجاح · عدد مرات النسخ: %1$d</string>
+    <string name="home_copy_count">نُسخ %1$d مرة</string>
+    <string name="home_copied_star">تم النسخ %1$d مرة</string>
+    <string name="home_show_all_numbers">عرض كل الأرقام (%1$d)</string>
+    <string name="home_show_less">عرض أقل</string>
     <string name="home_history">السجل (%1$d)</string>
     <string name="home_tips_title">نصائح لدقة أفضل</string>
     <string name="home_tip_1">صوّر الورقة على سطح مستوٍ وبإضاءة جيدة.</string>
@@ -107,7 +118,7 @@
     <string name="history_empty_preview">لا يوجد نص</string>
     <string name="history_count">%1$d مستند</string>
     <string name="history_selected">المحدد: %1$d</string>
-    <string name="history_search_hint">بحث في السجل</string>
+    <string name="history_search_hint">بحث بالاسم أو النص أو الرقم</string>
     <string name="history_sort">ترتيب</string>
     <string name="history_no_results">لا توجد نتائج مطابقة.</string>
 

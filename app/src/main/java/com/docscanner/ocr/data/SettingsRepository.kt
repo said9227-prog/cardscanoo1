@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.asStateFlow
  * and mirrors every change to SharedPreferences.
  */
 data class AppSettings(
-    val themeMode: ThemeMode = ThemeMode.SYSTEM,
+    val themeMode: ThemeMode = ThemeMode.LIGHT,
     val preprocessMode: PreprocessMode = PreprocessMode.AUTO,
     val autoStraighten: Boolean = true,
     val showBoxes: Boolean = true
